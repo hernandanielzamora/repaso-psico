@@ -19,6 +19,10 @@ export type Subject = {
   description: string;
   questionTypes: QuestionType[];
   topics: string[];
+  demo?: boolean;
+  accent: string;
+  soft: string;
+  mark: string;
 };
 
 export const subjects: Subject[] = [
@@ -27,8 +31,21 @@ export const subjects: Subject[] = [
     name: "Psicología Experimental",
     shortName: "Psico Experimental",
     description: "RMf, salmón muerto, estadística y tES.",
-    questionTypes: ["choice", "development"],
-    topics: ["RMf", "Estadística", "tES", "Integración"]
+    questionTypes: ["choice", "development", "image-analysis"],
+    topics: ["RMf", "Estadística", "tES", "Integración"],
+    accent: "#31513a", soft: "#e3eee1", mark: "E"
+  },
+  {
+    id: "sani", name: "Sani", shortName: "Sani",
+    description: "Probá el recorrido de estudio. El material de esta materia todavía no está cargado.",
+    questionTypes: ["choice", "development"], topics: ["Demostración"],
+    demo: true, accent: "#31513a", soft: "#e3eee1", mark: "S"
+  },
+  {
+    id: "psicopato", name: "PsicoPato", shortName: "PsicoPato",
+    description: "Probá la práctica con imágenes. Falta incorporar el material de la materia.",
+    questionTypes: ["image-analysis"], topics: ["Demostración"],
+    demo: true, accent: "#8d522f", soft: "#fff0d7", mark: "🦆"
   }
 ];
 
@@ -41,7 +58,7 @@ export const questionTypeLabels: Record<QuestionType, string> = {
 
 export type Question = {
   id: string;
-  subjectId?: SubjectId;
+  subjectId: SubjectId;
   type: QuestionType;
   topic: string;
   unit?: string;
@@ -55,7 +72,15 @@ export type Question = {
   media?: MediaAsset;
 };
 
-export const questions: Question[] = [
+const experimentalQuestions: Omit<Question, "subjectId">[] = [
+  {
+    id: "vigilance-image", type: "image-analysis", topic: "tES", difficulty: "Aplicación",
+    prompt: "Observá las dos curvas. ¿Cuál representa la estimulación simulada y qué permite concluir la comparación?",
+    explanation: "La curva B representa la estimulación simulada: el rendimiento disminuye con el tiempo. La curva A representa la estimulación real, que mantiene el rendimiento relativamente estable. Según el resumen, la estimulación real mitigó el decremento en vigilancia frente a sham. El esquema no permite deducir valores numéricos ni significación estadística.",
+    rubric: ["Identifica B como sham y A como estimulación real.", "Describe el decremento en vigilancia en sham y el mantenimiento relativo en real.", "Distingue el patrón cualitativo de una prueba de significación estadística."],
+    source: "Resumen aportado, pp. 19–20: estudio de vigilancia de Luna y colaboradores (2020).",
+    media: { type: "image", src: "/images/vigilancia.svg", alt: "Esquema de aciertos de detección a lo largo del tiempo: la curva A se mantiene horizontal y la curva B desciende. Ambas parten del mismo nivel.", width: 800, height: 480, caption: "Esquema didáctico basado en el resumen; sin valores numéricos. No es la figura original del estudio.", credit: "Elaboración para Núcleo a partir del resumen aportado." }
+  },
   {
     id: "rmf-indirecta",
     type: "choice",
@@ -245,5 +270,32 @@ export const questions: Question[] = [
       "Menciona la necesidad de corrección y/o replicación."
     ]
   }
+];
+
+const demoQuestions: Question[] = [
+  {
+    id: "sani-demo-choice", subjectId: "sani", type: "choice", topic: "Demostración", difficulty: "Base",
+    prompt: "Esta es una pregunta de prueba del recorrido. ¿Qué botón permite revisar tu elección?",
+    options: ["Comprobar respuesta", "Todas las materias", "Volver a la materia"], answer: 0,
+    explanation: "Comprobar respuesta muestra la explicación. Después podés avanzar hasta el resultado de la sesión.", source: "Demostración de la interfaz; no es contenido académico."
+  },
+  {
+    id: "sani-demo-development", subjectId: "sani", type: "development", topic: "Demostración", difficulty: "Base",
+    prompt: "Para probar el modo de desarrollo, escribí cómo organizarías una sesión de repaso.",
+    explanation: "Podés elegir un tema, responder sin mirar el material y contrastar tu respuesta con los criterios. Esta consigna solo demuestra el funcionamiento de la interfaz.",
+    rubric: ["Propone un tema o una meta de repaso.", "Incluye una forma de revisar lo aprendido."], source: "Demostración de la interfaz; no es contenido académico."
+  },
+  {
+    id: "psicopato-demo-image", subjectId: "psicopato", type: "image-analysis", topic: "Demostración", difficulty: "Base",
+    prompt: "Describí las formas y su distribución en esta imagen de demostración.",
+    explanation: "Hay dos círculos en la parte superior, un triángulo en el centro y un rectángulo en la parte inferior. El objetivo es probar la observación, la ampliación y la respuesta escrita. No es una lámina de Rorschach ni permite una interpretación psicológica.",
+    rubric: ["Describe las formas visibles.", "Indica su posición sin atribuirles significado psicológico."], source: "Imagen geométrica creada para probar la interfaz; no es material de la cátedra.",
+    media: { type: "image", src: "/images/demo-formas.svg", alt: "Dos círculos arriba, un triángulo en el centro y un rectángulo abajo, distribuidos simétricamente.", width: 800, height: 480, caption: "Imagen de demostración. No es una lámina de Rorschach." }
+  }
+];
+
+export const questions: Question[] = [
+  ...experimentalQuestions.map((question) => ({ ...question, subjectId: "psicologia-experimental" })),
+  ...demoQuestions
 ];
 

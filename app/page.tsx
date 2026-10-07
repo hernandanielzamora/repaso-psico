@@ -1,75 +1,105 @@
 "use client";
 
-import Image from "next/image";
-import { useState } from "react";
-import { questions } from "@/data";
+import { useState, useSyncExternalStore } from "react";
+import { questions, subjects, questionTypeLabels, type Question, type Subject } from "@/data";
+import { selectQuestions, subjectProgress, type Mode, type Progress } from "@/lib/study";
+import { useProgress } from "@/lib/progress-store";
+import { FocusHeading, Session } from "./study-session";
 
-type Screen = "library" | "subject" | "session";
-type SubjectKey = "experimental" | "sani" | "psicopato";
-
-type MockSubject = {
-  key: SubjectKey;
-  name: string;
-  eyebrow: string;
-  description: string;
-  accent: string;
-  soft: string;
-  icon: "letter" | "duck";
-  progress: number;
-  modules: { name: string; count: number; state: string }[];
+const primary = "button button-primary";
+const secondary = "button button-secondary";
+const subjectHref = (id: string) => `#subject/${encodeURIComponent(id)}`;
+const subscribeRoute = (listener: () => void) => {
+  window.addEventListener("hashchange", listener);
+  return () => window.removeEventListener("hashchange", listener);
 };
-
-const patoImage = "https://ih1.redbubble.net/image.5807593511.3759/st,small,507x507-pad,600x600,f8f8f8.jpg";
-const experimentalChoiceQuestions = questions.filter((item) => item.type === "choice");
-const mockSubjects: MockSubject[] = [
-  { key: "experimental", name: "Psicología Experimental", eyebrow: "RMf · estadística · tES", description: "La materia prioritaria para tu parcial: conceptos, críticas metodológicas y práctica integradora.", accent: "#31513a", soft: "#e3eee1", icon: "letter", progress: 17, modules: [{ name: "RMf y salmón muerto", count: 9, state: "En curso" }, { name: "Crítica estadística", count: 6, state: "Disponible" }, { name: "tES y vigilancia", count: 5, state: "Disponible" }] },
-  { key: "sani", name: "Sani", eyebrow: "Métodos y pensamiento científico", description: "Un espacio para ordenar conceptos, practicar diseños y llegar al parcial con criterio.", accent: "#31513a", soft: "#e3eee1", icon: "letter", progress: 42, modules: [{ name: "Conceptos fundamentales", count: 18, state: "En curso" }, { name: "Diseños experimentales", count: 12, state: "Disponible" }, { name: "Preguntas integradoras", count: 8, state: "Disponible" }] },
-  { key: "psicopato", name: "PsicoPato", eyebrow: "Rorschach · lectura de láminas", description: "Aprendé a mirar antes de interpretar: láminas, administración y criterios de análisis.", accent: "#8d522f", soft: "#fff0d7", icon: "duck", progress: 8, modules: [{ name: "Antes de interpretar", count: 10, state: "Disponible" }, { name: "Láminas y respuestas", count: 16, state: "Próximamente" }, { name: "Integración de protocolo", count: 8, state: "Próximamente" }] }
-];
+const readRoute = () => window.location.hash;
 
 export default function Home() {
-  const [screen, setScreen] = useState<Screen>("library");
-  const [selectedSubject, setSelectedSubject] = useState<SubjectKey>("experimental");
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const subject = mockSubjects.find((item) => item.key === selectedSubject) ?? mockSubjects[0];
-  const openSubject = (key: SubjectKey) => { setSelectedSubject(key); setScreen("subject"); resetSession(); };
-  const resetSession = () => { setSelectedOption(null); setShowFeedback(false); };
-  const openSession = () => { setScreen("session"); resetSession(); };
-
-  return <main className="min-h-screen bg-[#f4f1eb] px-5 py-5 text-[#20231f] md:px-10 md:py-8"><div className="mx-auto max-w-7xl"><TopBar screen={screen} subject={subject} onHome={() => setScreen("library")} onBack={() => setScreen(screen === "session" ? "subject" : "library")} />{screen === "library" && <Library onOpen={openSubject} />}{screen === "subject" && <SubjectHome subject={subject} onBack={() => setScreen("library")} onStart={openSession} />}{screen === "session" && <Session subject={subject} selectedOption={selectedOption} showFeedback={showFeedback} onBack={() => setScreen("subject")} onSelect={setSelectedOption} onReveal={() => setShowFeedback(true)} onNext={resetSession} />}</div></main>;
+  const hash = useSyncExternalStore(subscribeRoute, readRoute, () => "");
+  const [, screen, id] = /^#(subject|session)\/([\w-]+)$/.exec(hash) ?? [];
+  const subject = subjects.find((item) => item.id === id);
+  const [sessionPlan, setSessionPlan] = useState<{ subjectId: string; questions: Question[] } | null>(null);
+  const { progress, warning } = useProgress();
+  function start(selected: Question[]) {
+    if (!subject || !selected.length) return;
+    setSessionPlan({ subjectId: subject.id, questions: selected });
+    window.history.pushState(null, "", `#session/${subject.id}`);
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+  }
+  return <main id="contenido" className="min-h-screen px-4 py-5 sm:px-8 md:py-8">
+    <div className="mx-auto max-w-7xl">
+      <header className="mb-8 flex items-center justify-between gap-4 border-b border-[#d8d4ca] pb-5">
+        <a href="#library" className="flex items-center gap-3" aria-label="Núcleo — Todas las materias">
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#25342b] font-bold text-white">N</span>
+          <span className="font-bold">Núcleo<span className="block text-xs font-normal text-[#526056]">Psicología · UNC</span></span>
+        </a>
+        <a href="#library" className={secondary}>Todas las materias</a>
+      </header>
+      {warning && <p role="status" className="mb-6 rounded-xl bg-[#fff0d7] p-4">{warning}</p>}
+      {!subject ? <Library progress={progress} /> : screen === "session"
+        ? <Session key={subject.id} subject={subject} bank={sessionPlan?.subjectId === subject.id ? sessionPlan.questions : selectQuestions(subject.id)} />
+        : <SubjectHome key={subject.id} subject={subject} progress={progress} onStart={start} />}
+      <footer className="mt-12 border-t border-[#d8d4ca] py-5 text-sm text-[#526056]">Tu progreso se guarda en este navegador. No se sincroniza entre dispositivos.</footer>
+    </div>
+  </main>;
 }
 
-function TopBar({ screen, subject, onHome, onBack }: { screen: Screen; subject: MockSubject; onHome: () => void; onBack: () => void }) {
-  return <header className="mb-8 flex items-center justify-between gap-4 border-b border-[#d8d4ca] pb-5"><div className="flex min-w-0 items-center gap-3"><button onClick={onHome} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#25342b] text-sm font-bold text-[#f7f3ea]" aria-label="Ir a todas las materias">N</button><div className="min-w-0"><button onClick={onHome} className="block text-left text-sm font-bold tracking-tight text-[#25342b]">Núcleo</button>{screen !== "library" && <button onClick={onBack} className="block max-w-[16rem] truncate text-left text-xs text-[#7b8179]">← {subject.name}</button>}</div></div><div className="hidden items-center gap-6 text-sm text-[#737a72] sm:flex"><span>Mi recorrido</span><span>Biblioteca</span><span className="rounded-full bg-[#e2eadf] px-3 py-1.5 font-bold text-[#31513a]">{screen === "library" ? "Explorar" : "Estudiando"}</span></div><button className="rounded-full border border-[#d1cdc3] px-3 py-2 text-xs font-bold text-[#657066]">Perfil</button></header>;
+function ProgressBar({ percent }: { percent: number }) {
+  return <progress aria-label="Preguntas recorridas" value={percent} max={100} className="h-2 w-full" />;
 }
 
-function Library({ onOpen }: { onOpen: (key: SubjectKey) => void }) {
-  return <div className="space-y-10"><section className="grid items-end gap-8 lg:grid-cols-[1fr_300px]"><div><div className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-[#e78b5c]">Biblioteca de estudio</div><h1 className="max-w-3xl text-5xl leading-[0.94] tracking-[-0.05em] md:text-7xl">Elegí una materia.<br /><em className="text-[#5d765a]">Entrá en ritmo.</em></h1><p className="mt-5 max-w-xl text-base leading-7 text-[#697269]">Cada materia tiene su propio recorrido, tipos de pregunta y forma de mirar el contenido. Nada de treinta filtros compitiendo por atención.</p></div><div className="rounded-3xl bg-[#25342b] p-6 text-[#f7f3ea]"><div className="text-xs uppercase tracking-[0.16em] text-[#b8c8b3]">Tu mapa</div><div className="mt-4 text-4xl font-bold">3 <span className="text-base font-normal text-[#b8c8b3]">materias activas</span></div><p className="mt-5 text-sm leading-5 text-[#cbd7c7]">Tu próxima sesión: 12 minutos de práctica.</p></div></section><section><div className="mb-4 flex items-baseline justify-between"><h2 className="text-2xl tracking-tight">Tus materias</h2><span className="text-sm text-[#899087]">3 recorridos</span></div><div className="grid gap-5 md:grid-cols-2">{mockSubjects.map((item) => <SubjectCard key={item.key} subject={item} onOpen={() => onOpen(item.key)} />)}</div></section><section className="border-t border-[#d8d4ca] pt-6"><h2 className="text-xl">Diseñado para sumar otra materia sin rehacer todo.</h2><p className="mt-1 text-sm text-[#737a72]">Cuando llegue la próxima, aparecerá como un nuevo recorrido acá.</p></section></div>;
+function Library({ progress }: { progress: Progress }) {
+  const realSubjects = subjects.filter((subject) => !subject.demo);
+  const realQuestions = questions.filter((question) => realSubjects.some((subject) => subject.id === question.subjectId));
+  const reviewed = realQuestions.filter((question) => progress[question.id]).length;
+  return <div className="space-y-10">
+    <section className="grid items-end gap-8 lg:grid-cols-[1fr_300px]">
+      <div><p className="eyebrow mb-3">Biblioteca de estudio</p><FocusHeading className="text-5xl leading-[1.02] tracking-[-0.05em] md:text-7xl">Elegí una materia.<br /><em className="text-[#5d765a]">Entrá en ritmo.</em></FocusHeading><p className="mt-5 max-w-xl leading-7 text-[#526056]">Practicá a tu manera: elegí un tema, respondé preguntas y revisá lo que necesitás reforzar.</p></div>
+      <aside className="rounded-3xl bg-[#25342b] p-6 text-[#f7f3ea]"><p className="text-xs uppercase tracking-widest text-[#cbd7c7]">Tu recorrido</p><p className="mt-4 text-4xl">{reviewed} <span className="text-base">/ {realQuestions.length} preguntas</span></p><p className="mt-4 text-sm text-[#cbd7c7]">{realSubjects.length} materia con contenido · {subjects.length - realSubjects.length} demos</p></aside>
+    </section>
+    <section aria-labelledby="materias"><h2 id="materias" className="mb-4 text-2xl">Tus materias</h2><div className="grid gap-5 md:grid-cols-2">
+      {subjects.map((subject) => {
+        const stats = subjectProgress(subject.id, progress);
+        return <a key={subject.id} href={subjectHref(subject.id)} className="subject-card rounded-3xl border border-[#ded9cf] bg-[#fbfaf7] p-6">
+          <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="eyebrow mb-3">{subject.demo ? "Demo · sin contenido de cátedra" : "Contenido del resumen"}</p><h3 className="text-3xl tracking-tight sm:text-4xl">{subject.name}</h3></div><span aria-hidden="true" className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-3xl font-bold" style={{ backgroundColor: subject.soft, color: subject.accent }}>{subject.mark}</span></div>
+          <p className="mt-5 text-sm leading-6 text-[#526056]">{subject.description}</p>
+          <p className="mt-4 text-sm text-[#526056]">{subject.questionTypes.map((type) => questionTypeLabels[type]).join(" · ")}</p>
+          <div className="mt-6"><ProgressBar percent={stats.percent} /><p className="mt-2 text-sm">{subject.demo ? "Explorar demostración" : `${stats.reviewed} de ${stats.total} recorridas · ${stats.percent}%`} <span aria-hidden="true">→</span></p></div>
+        </a>;
+      })}
+    </div></section>
+  </div>;
 }
 
-function SubjectCard({ subject, onOpen }: { subject: MockSubject; onOpen: () => void }) {
-  return <button onClick={onOpen} className="group relative overflow-hidden rounded-3xl border border-[#ded9cf] bg-[#fbfaf7] p-6 text-left transition hover:-translate-y-1 hover:border-[#aebaaa] hover:shadow-[0_20px_50px_rgba(63,58,45,0.1)]"><div className="flex items-start justify-between gap-5"><div><div className="mb-3 text-xs font-bold uppercase tracking-[0.14em]" style={{ color: subject.accent }}>{subject.eyebrow}</div><h3 className="text-4xl tracking-[-0.04em]">{subject.name}</h3></div><SubjectMark subject={subject} size="small" /></div><p className="mt-6 max-w-md text-sm leading-6 text-[#697269]">{subject.description}</p><div className="mt-8 flex items-center justify-between"><div className="flex items-center gap-3"><div className="h-2 w-28 overflow-hidden rounded-full bg-[#e5e1d8]"><div className="h-full rounded-full" style={{ width: `${subject.progress}%`, backgroundColor: subject.accent }} /></div><span className="text-xs font-bold text-[#6f776e]">{subject.progress}%</span></div><span className="text-xl text-[#697269] transition group-hover:translate-x-1">→</span></div></button>;
-}
-
-function SubjectHome({ subject, onBack, onStart }: { subject: MockSubject; onBack: () => void; onStart: () => void }) {
-  return <div className="space-y-8"><button onClick={onBack} className="text-sm font-bold text-[#697269]">← Todas las materias</button><section className="grid gap-6 lg:grid-cols-[1fr_340px]"><div className="rounded-3xl p-7 md:p-10" style={{ backgroundColor: subject.soft }}><div className="flex items-start justify-between gap-6"><div><div className="mb-3 text-xs font-bold uppercase tracking-[0.16em]" style={{ color: subject.accent }}>{subject.eyebrow}</div><h1 className="text-6xl tracking-[-0.06em] md:text-8xl">{subject.name}</h1></div><SubjectMark subject={subject} size="large" /></div><p className="mt-8 max-w-xl text-lg leading-8 text-[#526056]">{subject.description}</p><button onClick={onStart} className="mt-8 rounded-full px-5 py-3 text-sm font-bold text-white" style={{ backgroundColor: subject.accent }}>Empezar sesión →</button></div><div className="rounded-3xl bg-[#25342b] p-7 text-[#f7f3ea]"><div className="text-xs uppercase tracking-[0.16em] text-[#b8c8b3]">Estado actual</div><div className="mt-7 text-6xl font-bold">{subject.progress}%</div><p className="mt-2 text-sm text-[#b8c8b3]">de esta materia recorrida</p><div className="mt-8 h-2 overflow-hidden rounded-full bg-[#4d6352]"><div className="h-full rounded-full bg-[#e8ae74]" style={{ width: `${subject.progress}%` }} /></div></div></section><section><div className="mb-4 flex items-end justify-between"><div><div className="text-xs font-bold uppercase tracking-[0.16em] text-[#899087]">Recorrido</div><h2 className="mt-1 text-3xl tracking-tight">Tu camino por la materia</h2></div><span className="text-sm text-[#899087]">{subject.modules.length} módulos</span></div><div className="grid gap-3">{subject.modules.map((module, index) => <div key={module.name} className="flex items-center gap-4 rounded-2xl border border-[#ded9cf] bg-[#fbfaf7] p-4"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#e9e6de] text-sm font-bold text-[#6d766b]">0{index + 1}</div><div className="min-w-0 flex-1"><h3 className="font-bold">{module.name}</h3><p className="mt-1 text-sm text-[#899087]">{module.count} tarjetas · {module.state}</p></div><span className="text-[#899087]">{module.state === "Próximamente" ? "○" : "→"}</span></div>)}</div></section></div>;
-}
-
-function Session({ subject, selectedOption, showFeedback, onBack, onSelect, onReveal, onNext }: { subject: MockSubject; selectedOption: number | null; showFeedback: boolean; onBack: () => void; onSelect: (value: number) => void; onReveal: () => void; onNext: () => void }) {
-  const [questionIndex, setQuestionIndex] = useState(0);
-  const isPsychoDuck = subject.key === "psicopato";
-  const question = experimentalChoiceQuestions[questionIndex % experimentalChoiceQuestions.length];
-  const prompt = isPsychoDuck ? "Antes de interpretar una lámina, ¿qué conviene hacer primero?" : question.prompt;
-  const options = isPsychoDuck ? ["Buscar inmediatamente un símbolo conocido", "Registrar la respuesta completa y la conducta antes de codificar", "Elegir la interpretación más frecuente", "Descartar las respuestas que no parezcan populares"] : question.options ?? [];
-  const correct = isPsychoDuck ? 1 : question.answer;
-  const isCorrect = selectedOption === correct;
-  const advance = () => { setQuestionIndex((current) => current + 1); onNext(); };
-
-  return <div className="mx-auto max-w-4xl"><button onClick={onBack} className="mb-6 text-sm font-bold text-[#697269]">← Volver a {subject.name}</button><div className="mb-5 flex items-center justify-between text-xs font-bold uppercase tracking-[0.16em] text-[#899087]"><span>Sesión rápida · {subject.name}</span><span>{isPsychoDuck ? "01 / 10" : `${questionIndex + 1} / ${experimentalChoiceQuestions.length}`}</span></div><article className="overflow-hidden rounded-3xl border border-[#ded9cf] bg-white shadow-[0_20px_70px_rgba(63,58,45,0.08)]"><div className="border-b border-[#eeeae1] px-6 py-7 md:px-10">{isPsychoDuck && <div className="mb-6 overflow-hidden rounded-2xl bg-[#f4efe5] p-5"><Image src={patoImage} alt="PsicoPato sosteniendo una lámina para analizar" width={600} height={600} unoptimized className="mx-auto h-48 w-48 rounded-xl object-cover md:h-64 md:w-64" /><p className="mt-3 text-center text-xs uppercase tracking-[0.14em] text-[#8d522f]">Mockup de análisis de lámina</p></div>}<div className="mb-4 text-xs font-bold uppercase tracking-[0.14em]" style={{ color: subject.accent }}>{isPsychoDuck ? "Análisis de imagen · Rorschach" : subject.key === "experimental" ? "Psicología Experimental · banco real" : "Conceptos fundamentales"}</div><h1 className="max-w-3xl text-3xl leading-tight tracking-[-0.03em] md:text-5xl">{prompt}</h1></div><div className="space-y-3 px-6 py-7 md:px-10 md:py-9">{options.map((option, index) => <button key={option} disabled={showFeedback} onClick={() => onSelect(index)} className={`flex min-h-14 w-full items-start gap-4 rounded-2xl border p-4 text-left transition ${selectedOption === index ? (showFeedback ? (isCorrect ? "border-[#86a783] bg-[#e7f0e5]" : "border-[#dd9878] bg-[#fff0e8]") : "border-[#5d765a] bg-[#eef4ec]") : "border-[#e7e4dc] hover:border-[#aebaaa]"}`}><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-current text-xs font-bold">{String.fromCharCode(65 + index)}</span><span>{option}</span></button>)}{!showFeedback ? <button onClick={onReveal} disabled={selectedOption === null} className="mt-4 min-h-12 rounded-full bg-[#25342b] px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-35">Comprobar respuesta</button> : <div className="mt-5 rounded-2xl bg-[#f1f5ef] p-5"><strong className="text-[#31513a]">{isCorrect ? "Correcto" : "Pista para volver a pensarlo"}</strong><p className="mt-2 leading-7 text-[#465247]">{isPsychoDuck ? "En Rorschach, el registro de la respuesta y de la conducta precede a la codificación y a cualquier interpretación. Este mockup anticipa una experiencia donde la lámina ocupa el centro y la teoría acompaña, no tapa, la observación." : question.explanation}</p><p className="mt-4 text-xs font-bold uppercase tracking-wider text-[#819080]">{isPsychoDuck ? "Material de prueba · futura fuente de cátedra" : question.source}</p>{!isPsychoDuck && <button onClick={advance} className="mt-5 min-h-12 rounded-full bg-[#31513a] px-5 py-3 text-sm font-bold text-white">Siguiente pregunta →</button>}</div>}</div></article></div>;
-}
-
-function SubjectMark({ subject, size }: { subject: MockSubject; size: "small" | "large" }) {
-  if (subject.icon === "duck") return <Image src={patoImage} alt="PsicoPato" width={size === "large" ? 170 : 86} height={size === "large" ? 170 : 86} unoptimized className={`${size === "large" ? "h-32 w-32 md:h-40 md:w-40" : "h-16 w-16"} rounded-2xl object-cover`} />;
-  return <div className={`${size === "large" ? "h-32 w-32 text-7xl md:h-40 md:w-40 md:text-8xl" : "h-16 w-16 text-4xl"} flex items-center justify-center rounded-2xl bg-[#d9e6d6] font-bold text-[#31513a]`}>S</div>;
+function SubjectHome({ subject, progress, onStart }: { subject: Subject; progress: Progress; onStart: (bank: Question[]) => void }) {
+  const [mode, setMode] = useState<Mode>("all");
+  const [topic, setTopic] = useState("all");
+  const selected = selectQuestions(subject.id, mode, topic);
+  const stats = subjectProgress(subject.id, progress);
+  return <div className="space-y-8">
+    <section className="grid gap-6 lg:grid-cols-[1fr_300px]">
+      <div className="min-w-0 rounded-3xl p-6 md:p-9" style={{ backgroundColor: subject.soft }}>
+        <p className="eyebrow mb-4">{subject.demo ? "Demostración del recorrido" : "Tu materia prioritaria"}</p>
+        <FocusHeading className="text-4xl tracking-[-0.04em] sm:text-6xl">{subject.name}</FocusHeading>
+        <p className="mt-6 max-w-xl text-lg leading-8 text-[#526056]">{subject.description}</p>
+        {subject.demo && <p className="mt-4 font-bold">Estos ejercicios prueban la interfaz; no son material para el parcial.</p>}
+      </div>
+      <aside className="rounded-3xl bg-[#25342b] p-7 text-[#f7f3ea]"><p className="text-sm">{subject.demo ? "Recorrido de prueba" : "Tu avance"}</p><p className="my-5 text-6xl">{stats.percent}%</p><ProgressBar percent={stats.percent} /><p className="mt-3 text-sm">{stats.reviewed} de {stats.total} preguntas recorridas</p><p className="mt-3 text-sm text-[#cbd7c7]">{stats.mastered} resueltas o autoevaluadas como logradas. Recorrer no implica dominar.</p></aside>
+    </section>
+    <section className="panel" aria-labelledby="preparar"><h2 id="preparar" className="text-3xl">Prepará tu sesión</h2>
+      <div className="mt-6 grid gap-5 sm:grid-cols-2">
+        <label className="font-bold" htmlFor="mode">Forma de practicar<select id="mode" value={mode} onChange={(event) => setMode(event.target.value as Mode)}><option value="all">Todas las modalidades</option>{subject.questionTypes.map((type) => <option key={type} value={type}>{questionTypeLabels[type]}</option>)}</select></label>
+        <label className="font-bold" htmlFor="topic">Tema<select id="topic" value={topic} onChange={(event) => setTopic(event.target.value)}><option value="all">Todos los temas</option>{subject.topics.map((name) => <option key={name}>{name}</option>)}</select></label>
+      </div>
+      <p role="status" className="my-5 text-[#526056]">{selected.length ? `${selected.length} preguntas en esta sesión. Desarrollo e imágenes se revisan con una guía de autoevaluación.` : "Todavía no hay preguntas para esta combinación. Elegí otro tema o modalidad."}</p>
+      <button className={primary} disabled={!selected.length} onClick={() => onStart(selected)}>{subject.demo ? "Probar sesión" : "Empezar sesión"} →</button>
+    </section>
+    <section aria-labelledby="temas"><h2 id="temas" className="mb-4 text-2xl">Práctica por tema</h2><div className="grid gap-3 sm:grid-cols-2">
+      {subject.topics.map((name) => {
+        const bank = selectQuestions(subject.id, "all", name);
+        return <button key={name} className="panel text-left" disabled={!bank.length} onClick={() => onStart(bank)}><span className="block text-xl">{name} →</span><span className="mt-2 block text-sm text-[#526056]">{bank.length} preguntas · {bank.filter((question) => progress[question.id]).length} recorridas</span></button>;
+      })}
+    </div></section>
+  </div>;
 }

@@ -1,82 +1,67 @@
 # Núcleo de estudio
 
-Web app personal para preparar el parcial de Psicología Experimental de la Facultad de Psicología, UNC. El banco inicial se construye a partir del resumen de la unidad sobre RMf, el salmón muerto y tES.
+Web app de repaso para Psicología, UNC. Experimental conserva las 12 preguntas originales del resumen (9 choice y 3 desarrollos) y agrega 1 pregunta visual: 13 en total. Es un banco inicial, no una cobertura exhaustiva de las 26 páginas del PDF.
 
-## Qué incluye
+Sani y PsicoPato son demos explícitas, con ejercicios propios y progreso separado. La imagen geométrica de PsicoPato no es una lámina de Rorschach.
 
-- Elección múltiple con feedback inmediato y explicación conceptual.
-- Preguntas de desarrollo con respuesta escrita y rúbrica de corrección.
-- Filtros por RMf, estadística, tES e integración.
-- Progreso y racha guardados en `localStorage`.
-- Preguntas versionadas en `data.ts`, con fuente indicada en cada explicación.
-- Modelo extensible de materias, unidades, tipos de pregunta y recursos visuales.
+## Funcionalidad
 
-## Agregar una materia
+- Elección de modalidad y tema, sesiones mixtas y práctica por tema.
+- Choice con corrección, explicación y respuesta correcta.
+- Desarrollo e imágenes con respuesta escrita, guía y autoevaluación.
+- Imágenes locales con ampliación y descripción alternativa.
+- Sesiones finitas, resultados y repaso de pendientes.
+- Progreso real por pregunta, guardado en localStorage y validado al leer.
+- Navegación con fragmentos de URL compatible con el botón Atrás y hosting estático.
+- Interfaz adaptable a celular y computadora, con controles de teclado.
 
-En `data.ts`, agregar una entrada en `subjects`:
+El progreso mide preguntas revisadas; no garantiza dominio. No hay cuentas ni sincronización entre dispositivos. Las revisiones completadas se guardan; la sesión y el texto escrito se reinician al salir o recargar. Los desarrollos no tienen corrección automática.
 
-```ts
-{
-	id: "rorschach",
-	name: "Evaluación psicológica: Rorschach",
-	shortName: "Rorschach",
-	description: "Láminas, consignas y criterios de análisis.",
-	questionTypes: ["choice", "development", "image-analysis"],
-	topics: ["Administración", "Codificación", "Interpretación"]
-}
-```
+## Desarrollo
 
-Luego, cada pregunta debe indicar `subjectId` y su `type`. Para una lámina o imagen de estímulo se puede usar `media`:
-
-```ts
-media: {
-	type: "image",
-	src: "/images/rorschach/lamina-i.webp",
-	alt: "Lámina I del material de estudio",
-	width: 1200,
-	height: 900,
-	caption: "Observar primero la respuesta global y luego los detalles.",
-	credit: "Material autorizado para uso académico"
-}
-```
-
-Las imágenes deben guardarse en `public/images`. Para Rorschach conviene cargar únicamente material con permiso de uso o provisto por la cátedra, y diseñar las preguntas de imagen con contexto, zoom, alt text, fuente y criterios de respuesta antes de publicar.
-
-## Desarrollo local
-
-Requiere Node.js 22.13 o superior.
+Usar Node.js 22.13 o superior en la rama 22, o Node.js 24. El entorno original tenía 22.12 y npm advertía sobre el requisito de eslint-visitor-keys.
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
-Abrir http://localhost:3000.
+Abrir http://localhost:3000. En PowerShell con scripts deshabilitados, usar `npm.cmd`.
 
-Antes de publicar:
+## Verificación y vista previa
 
 ```bash
 npm run lint
-npm run build
+npm run test:e2e
+npm start
 ```
 
-## Deploy en Render
+`test:e2e` compila y ejecuta Playwright sobre la exportación de producción. Requiere Google Chrome instalado; si falta: `npx playwright install chrome`. `npm test` ejecuta solo las pruebas, con build previo.
 
-La versión actual no necesita servidor: es una **Static Site** porque el banco es estático y el progreso se guarda en el navegador. Crear un servicio **Static Site** conectado al repositorio con estos valores:
+`npm start` sirve `out/` en 127.0.0.1:3000; requiere `npm run build` previo. Puerto alternativo: `npm start -- 3100`. Se reemplazó `next start`, incompatible con la exportación estática.
 
-- **Root Directory:** `estudio-psico` si el repositorio conserva el PDF en la raíz.
-- **Build Command:** `npm ci && npm run build`
-- **Publish Directory:** `out`
-- **Environment:** Node
+## Agregar contenido
 
-La configuración ya está declarada en `render.yaml`, por lo que Render puede detectarla al crear un Blueprint.
+`data.ts` es la fuente única de materias y preguntas. Cada materia declara un ID estable de letras, números y guiones, nombre, descripción, temas, modalidades y presentación (`accent`, `soft`, `mark`). `demo: true` la excluye del progreso académico global.
 
-## Próxima fase: backend
+Cada pregunta requiere ID único y estable, `subjectId`, `type`, `topic`, `difficulty`, consigna, explicación y fuente. Choice/verdadero-falso requieren `options` y el índice correcto en `answer`. Las respuestas escritas requieren `rubric`. Las imágenes usan `media` con `src`, `alt`, dimensiones, descripción y crédito. Los archivos van en `public/images`.
 
-Esta primera versión no necesita backend: el banco es contenido estático y el progreso es personal. Si se agregan cuentas, sincronización entre dispositivos o edición desde la app, la opción simple es Supabase free con tablas para `questions`, `sources`, `attempts` y `users`. En ese momento se puede mantener este Static Site y conectar una API externa, o volver a un Web Service si se incorpora un servidor Next.js.
+Las cantidades se calculan desde el banco. Las pruebas validan IDs, pertenencia a materias, respuestas, rúbricas y recursos.
 
-## Fuentes base
+## Render
 
-- Aparicio (2012), «Lo que el IRMf de un salmón muerto nos puede enseñar…», Psyciencia.
-- González-García, Tudela y Ruz (2014), «Resonancia magnética funcional: análisis crítico…», Revista de Neurología.
-- Hemmerich, Luna, Lupiáñez y Martín-Arévalo (2020), «Estimulación eléctrica transcraneal: funcionamiento y usos en investigación», Ciencia Cognitiva.
+El proyecto exporta a `out/`. `render.yaml` configura:
+
+- Build: `npm ci && npm run build`.
+- Directorio publicado: `./out`.
+- Root Directory: `estudio-psico` si esta carpeta está dentro del repositorio.
+
+No requiere backend. Para sincronizar entre dispositivos habrá que incorporar cuentas y almacenamiento remoto.
+
+## Fuentes
+
+PDF aportado: «Psicología Experimental – Resumen de estudio (RMf, salmón muerto y tES)», 26 páginas. Resume Aparicio (2012), González-García, Tudela y Ruz (2014), y Hemmerich, Luna, Lupiáñez y Martín-Arévalo (2020).
+
+El esquema de vigilancia deriva de las páginas 19–20: representa relaciones cualitativas, sin valores numéricos, y no reproduce la figura original.
+
+Hallazgos y límites: [AUDITORIA.md](AUDITORIA.md).
