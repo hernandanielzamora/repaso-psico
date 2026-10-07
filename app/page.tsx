@@ -1,164 +1,70 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import {
-  questionTypeLabels,
-  questions,
-  subjects,
-  type Question,
-  type QuestionType,
-  type SubjectId,
-} from "@/data";
+import { useState } from "react";
+import { questions } from "@/data";
 
-type StudyMode = QuestionType;
+type Screen = "library" | "subject" | "session";
+type SubjectKey = "sani" | "psicopato";
 
-const modeLabels: Record<StudyMode, string> = questionTypeLabels;
+type MockSubject = {
+  key: SubjectKey;
+  name: string;
+  eyebrow: string;
+  description: string;
+  accent: string;
+  soft: string;
+  icon: "letter" | "duck";
+  progress: number;
+  modules: { name: string; count: number; state: string }[];
+};
+
+const patoImage = "https://ih1.redbubble.net/image.5807593511.3759/st,small,507x507-pad,600x600,f8f8f8.jpg";
+
+const mockSubjects: MockSubject[] = [
+  { key: "sani", name: "Sani", eyebrow: "Métodos y pensamiento científico", description: "Un espacio para ordenar conceptos, practicar diseños y llegar al parcial con criterio.", accent: "#31513a", soft: "#e3eee1", icon: "letter", progress: 42, modules: [{ name: "Conceptos fundamentales", count: 18, state: "En curso" }, { name: "Diseños experimentales", count: 12, state: "Disponible" }, { name: "Preguntas integradoras", count: 8, state: "Disponible" }] },
+  { key: "psicopato", name: "PsicoPato", eyebrow: "Rorschach · lectura de láminas", description: "Aprendé a mirar antes de interpretar: láminas, administración y criterios de análisis.", accent: "#8d522f", soft: "#fff0d7", icon: "duck", progress: 8, modules: [{ name: "Antes de interpretar", count: 10, state: "Disponible" }, { name: "Láminas y respuestas", count: 16, state: "Próximamente" }, { name: "Integración de protocolo", count: 8, state: "Próximamente" }] }
+];
 
 export default function Home() {
-  const [subjectId, setSubjectId] = useState<SubjectId>(subjects[0].id);
-  const [mode, setMode] = useState<StudyMode>("choice");
-  const [topic, setTopic] = useState<string | "Todas">("Todas");
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [selected, setSelected] = useState<number | null>(null);
-  const [showAnswer, setShowAnswer] = useState(false);
-  const [writtenAnswer, setWrittenAnswer] = useState("");
-  const [completed, setCompleted] = useState<string[]>(() => {
-    if (typeof window === "undefined") return [];
-    const saved = window.localStorage.getItem("nucleo-progress");
-    return saved ? ((JSON.parse(saved) as { completed?: string[] }).completed ?? []) : [];
-  });
-  const [resolved, setResolved] = useState(() => {
-    if (typeof window === "undefined") return 0;
-    const saved = window.localStorage.getItem("nucleo-progress");
-    return saved ? ((JSON.parse(saved) as { resolved?: number }).resolved ?? 0) : 0;
-  });
+  const [screen, setScreen] = useState<Screen>("library");
+  const [selectedSubject, setSelectedSubject] = useState<SubjectKey>("sani");
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const subject = mockSubjects.find((item) => item.key === selectedSubject) ?? mockSubjects[0];
+  const openSubject = (key: SubjectKey) => { setSelectedSubject(key); setScreen("subject"); setSelectedOption(null); setShowFeedback(false); };
+  const openSession = () => { setScreen("session"); setSelectedOption(null); setShowFeedback(false); };
 
-  const subject = subjects.find((item) => item.id === subjectId) ?? subjects[0];
-
-  useEffect(() => {
-    window.localStorage.setItem("nucleo-progress", JSON.stringify({ completed, resolved }));
-  }, [completed, resolved]);
-
-  const available = useMemo(
-    () => questions.filter((item) => (item.subjectId ?? subjects[0].id) === subjectId && item.type === mode && (topic === "Todas" || item.topic === topic)),
-    [mode, subjectId, topic]
-  );
-  const question = available[currentIndex % Math.max(available.length, 1)];
-  const progress = Math.round((completed.length / questions.length) * 100);
-
-  function resetCard() {
-    setSelected(null);
-    setShowAnswer(false);
-    setWrittenAnswer("");
-  }
-
-  function changeSubject(nextSubjectId: SubjectId) {
-    setSubjectId(nextSubjectId);
-    setCurrentIndex(0);
-    setTopic("Todas");
-    resetCard();
-  }
-
-  function changeMode(nextMode: StudyMode) {
-    setMode(nextMode);
-    setCurrentIndex(0);
-    resetCard();
-  }
-
-  function changeTopic(nextTopic: string | "Todas") {
-    setTopic(nextTopic);
-    setCurrentIndex(0);
-    resetCard();
-  }
-
-  function markComplete() {
-    if (!question || completed.includes(question.id)) return;
-    setCompleted((current) => [...current, question.id]);
-    setResolved((current) => current + 1);
-  }
-
-  function nextQuestion() {
-    markComplete();
-    setCurrentIndex((current) => current + 1);
-    resetCard();
-  }
-
-  const isCorrect = selected === question?.answer;
-
-  return (
-    <main className="min-h-screen px-5 py-6 md:px-10 md:py-10">
-      <div className="mx-auto max-w-6xl">
-        <header className="mb-8 flex items-start justify-between gap-6 md:mb-10">
-          <div>
-            <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[#5d765a]">
-              <span className="h-2 w-2 rounded-full bg-[#e78b5c]" /> Núcleo de estudio
-            </div>
-            <h1 className="max-w-2xl text-[2.7rem] leading-[0.95] tracking-[-0.04em] text-[#20231f] sm:text-4xl md:text-6xl">
-              Pensar bien también se entrena.
-            </h1>
-            <p className="mt-4 max-w-xl text-base leading-7 text-[#667066]">
-              Repaso activo con preguntas, imágenes y explicaciones para cada materia.
-            </p>
-          </div>
-          <div className="hidden rounded-2xl border border-[#d8d4ca] bg-[#fbfaf7] px-4 py-3 text-right sm:block">
-            <div className="text-2xl font-bold text-[#5d765a]">{resolved}</div>
-            <div className="text-xs uppercase tracking-wider text-[#8b9189]">tarjetas resueltas</div>
-          </div>
-        </header>
-
-        <section className="grid gap-5 lg:grid-cols-[240px_1fr]">
-          <aside className="space-y-5">
-            <div className="rounded-2xl bg-[#25342b] p-5 text-[#f7f3ea] shadow-[0_18px_50px_rgba(37,52,43,0.12)]">
-              <div className="mb-2 text-xs uppercase tracking-[0.16em] text-[#b8c8b3]">Tu recorrido</div>
-              <div className="flex items-end gap-2">
-                <strong className="text-4xl leading-none">{progress}%</strong>
-                <span className="pb-1 text-sm text-[#b8c8b3]">cubierto</span>
-              </div>
-              <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-[#4d6352]"><div className="h-full rounded-full bg-[#e8ae74] transition-all" style={{ width: `${progress}%` }} /></div>
-              <p className="mt-4 text-sm leading-5 text-[#cbd7c7]">El avance se guarda en este dispositivo.</p>
-            </div>
-
-            <div className="rounded-2xl border border-[#d8d4ca] bg-[#fbfaf7] p-3">
-              <label htmlFor="subject" className="px-3 pb-2 text-xs font-bold uppercase tracking-[0.16em] text-[#8b9189]">Materia</label>
-              <select id="subject" value={subjectId} onChange={(event) => changeSubject(event.target.value as SubjectId)} className="mt-2 w-full rounded-xl border border-[#d8d4ca] bg-white px-3 py-3 text-sm font-bold text-[#31513a] outline-none focus:border-[#7f9c7d]">
-                {subjects.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-              </select>
-              <p className="px-3 pt-3 text-sm leading-5 text-[#697269]">{subject.description}</p>
-            </div>
-
-            <nav className="rounded-2xl border border-[#d8d4ca] bg-[#fbfaf7] p-3">
-              <div className="px-3 pb-2 text-xs font-bold uppercase tracking-[0.16em] text-[#8b9189]">Tipo de pregunta</div>
-              {subject.questionTypes.map((item) => <button key={item} onClick={() => changeMode(item)} className={`mb-1 flex min-h-11 w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm transition ${mode === item ? "bg-[#e1eadf] font-bold text-[#31513a]" : "text-[#656d65] hover:bg-[#f0eee8]"}`}>{modeLabels[item]} <span>{mode === item ? "●" : "○"}</span></button>)}
-            </nav>
-
-            <div className="rounded-2xl border border-[#d8d4ca] bg-[#fbfaf7] p-4 text-sm leading-6 text-[#697269]"><strong className="text-[#303b31]">Método sugerido</strong><p className="mt-1">Respondé antes de mirar la explicación. En desarrollo, escribí primero y usá la rúbrica después.</p></div>
-          </aside>
-
-          <section className="min-w-0">
-            <div className="mb-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-              <div className="flex flex-wrap gap-2">{(["Todas", ...subject.topics]).map((item) => <button key={item} onClick={() => changeTopic(item)} className={`rounded-full px-3 py-1.5 text-xs font-bold ${topic === item ? "bg-[#e78b5c] text-white" : "bg-[#e8e5dd] text-[#727970]"}`}>{item === "Todas" ? "Todos" : item}</button>)}</div>
-              <span className="text-sm text-[#8b9189]">{available.length} tarjetas en este recorrido</span>
-            </div>
-            {question ? <StudyCard question={question} selected={selected} showAnswer={showAnswer} writtenAnswer={writtenAnswer} isCorrect={isCorrect} onSelect={setSelected} onWrittenAnswer={setWrittenAnswer} onReveal={() => { setShowAnswer(true); markComplete(); }} onNext={nextQuestion} /> : <EmptyState subject={subject} mode={mode} />}
-          </section>
-        </section>
-
-        <footer className="mt-10 flex flex-col gap-2 border-t border-[#d8d4ca] pt-5 text-xs text-[#899087] sm:flex-row sm:justify-between"><span>{subject.name} · contenido versionado con fuentes.</span><span>Versión local · progreso en tu navegador</span></footer>
-      </div>
-    </main>
-  );
+  return <main className="min-h-screen bg-[#f4f1eb] px-5 py-5 text-[#20231f] md:px-10 md:py-8"><div className="mx-auto max-w-7xl"><TopBar screen={screen} subject={subject} onHome={() => setScreen("library")} onBack={() => setScreen(screen === "session" ? "subject" : "library")} />{screen === "library" && <Library onOpen={openSubject} />}{screen === "subject" && <SubjectHome subject={subject} onBack={() => setScreen("library")} onStart={openSession} />}{screen === "session" && <Session subject={subject} selectedOption={selectedOption} showFeedback={showFeedback} onBack={() => setScreen("subject")} onSelect={setSelectedOption} onReveal={() => setShowFeedback(true)} />}</div></main>;
 }
 
-function EmptyState({ subject, mode }: { subject: { name: string }; mode: QuestionType }) {
-  return <div className="rounded-3xl border border-dashed border-[#cfcac0] bg-[#fbfaf7] p-8 text-center"><h2 className="text-xl text-[#303b31]">Todavía no hay tarjetas de {questionTypeLabels[mode].toLowerCase()} para {subject.name}.</h2><p className="mt-2 text-sm leading-6 text-[#697269]">El tipo ya está contemplado en el modelo de contenido y se puede activar cuando carguemos sus preguntas.</p></div>;
+function TopBar({ screen, subject, onHome, onBack }: { screen: Screen; subject: MockSubject; onHome: () => void; onBack: () => void }) {
+  return <header className="mb-8 flex items-center justify-between gap-4 border-b border-[#d8d4ca] pb-5"><div className="flex min-w-0 items-center gap-3"><button onClick={onHome} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#25342b] text-sm font-bold text-[#f7f3ea]" aria-label="Ir a todas las materias">N</button><div className="min-w-0"><button onClick={onHome} className="block text-left text-sm font-bold tracking-tight text-[#25342b]">Núcleo</button>{screen !== "library" && <button onClick={onBack} className="block max-w-[16rem] truncate text-left text-xs text-[#7b8179]">← {subject.name}</button>}</div></div><div className="hidden items-center gap-6 text-sm text-[#737a72] sm:flex"><span>Mi recorrido</span><span>Biblioteca</span><span className="rounded-full bg-[#e2eadf] px-3 py-1.5 font-bold text-[#31513a]">{screen === "library" ? "Explorar" : "Estudiando"}</span></div><button className="rounded-full border border-[#d1cdc3] px-3 py-2 text-xs font-bold text-[#657066]">Perfil</button></header>;
 }
 
-function StudyCard({ question, selected, showAnswer, writtenAnswer, isCorrect, onSelect, onWrittenAnswer, onReveal, onNext }: { question: Question; selected: number | null; showAnswer: boolean; writtenAnswer: string; isCorrect: boolean; onSelect: (value: number) => void; onWrittenAnswer: (value: string) => void; onReveal: () => void; onNext: () => void }) {
-  const isMultipleChoice = question.type === "choice" || question.type === "true-false";
-  return <article className="overflow-hidden rounded-3xl border border-[#dfdbd1] bg-white shadow-[0_20px_70px_rgba(63,58,45,0.08)]"><div className="border-b border-[#eeeae1] px-5 py-5 sm:px-6 md:px-10"><div className="mb-8 flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.15em] text-[#8b9189]"><span>{question.topic} · {question.difficulty}</span><span>{isMultipleChoice ? "01 / 02" : "02 / 02"}</span></div>{question.media && <MediaPreview media={question.media} />}<h2 className="max-w-3xl text-2xl leading-tight tracking-[-0.025em] text-[#20231f] md:text-4xl">{question.prompt}</h2></div><div className="px-5 py-6 sm:px-6 md:px-10 md:py-8">{isMultipleChoice ? <div className="grid gap-3">{question.options?.map((option, index) => <button key={option} disabled={showAnswer} onClick={() => onSelect(index)} className={`flex min-h-14 items-start gap-4 rounded-2xl border p-4 text-left text-base transition ${selected === index ? (showAnswer ? (isCorrect ? "border-[#86a783] bg-[#e7f0e5]" : "border-[#dd9878] bg-[#fff0e8]") : "border-[#5d765a] bg-[#eef4ec]") : "border-[#e7e4dc] hover:border-[#aebaaa] hover:bg-[#fbfaf7]"}`}><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-current text-xs font-bold">{String.fromCharCode(65 + index)}</span><span>{option}</span></button>)}</div> : <textarea value={writtenAnswer} onChange={(event) => onWrittenAnswer(event.target.value)} disabled={showAnswer} placeholder="Escribí tu respuesta con tus palabras..." className="min-h-48 w-full resize-y rounded-2xl border border-[#dcd8cf] bg-[#fbfaf7] p-5 text-base leading-7 outline-none transition placeholder:text-[#aaa9a1] focus:border-[#7f9c7d]" />}{!showAnswer ? <button onClick={onReveal} disabled={isMultipleChoice ? selected === null : writtenAnswer.trim().length < 10} className="mt-6 min-h-12 w-full rounded-full bg-[#25342b] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#3b5842] disabled:cursor-not-allowed disabled:opacity-35 sm:w-auto">{isMultipleChoice ? "Comprobar respuesta" : "Ver criterios y explicación"}</button> : <><div className="mt-6 rounded-2xl bg-[#f1f5ef] p-5"><div className="mb-2 flex items-center gap-2 font-bold text-[#31513a]">{isMultipleChoice ? (isCorrect ? "Correcto" : "Revisemos la idea") : "Pauta de corrección"}</div><p className="text-base leading-7 text-[#465247]">{question.explanation}</p>{question.rubric && <ul className="mt-4 grid gap-2 text-sm leading-5 text-[#637063]">{question.rubric.map((item) => <li key={item}>□ {item}</li>)}</ul>}<p className="mt-4 border-t border-[#d9e4d6] pt-3 text-xs font-bold uppercase tracking-wider text-[#819080]">{question.source}</p></div><button onClick={onNext} className="mt-3 min-h-12 w-full rounded-full border border-[#c9cfc7] px-5 py-3 text-sm font-bold text-[#405443] transition hover:bg-[#f4f6f2] sm:w-auto">Siguiente tarjeta →</button></>}</div></article>;
+function Library({ onOpen }: { onOpen: (key: SubjectKey) => void }) {
+  return <div className="space-y-10"><section className="grid items-end gap-8 lg:grid-cols-[1fr_300px]"><div><div className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-[#e78b5c]">Biblioteca de estudio</div><h1 className="max-w-3xl text-5xl leading-[0.94] tracking-[-0.05em] md:text-7xl">Elegí una materia.<br /><em className="text-[#5d765a]">Entrá en ritmo.</em></h1><p className="mt-5 max-w-xl text-base leading-7 text-[#697269]">Cada materia tiene su propio recorrido, tipos de pregunta y forma de mirar el contenido. Nada de treinta filtros compitiendo por atención.</p></div><div className="rounded-3xl bg-[#25342b] p-6 text-[#f7f3ea]"><div className="text-xs uppercase tracking-[0.16em] text-[#b8c8b3]">Tu mapa</div><div className="mt-4 text-4xl font-bold">2 <span className="text-base font-normal text-[#b8c8b3]">materias activas</span></div><div className="mt-5 flex gap-1"><span className="h-2 w-2 rounded-full bg-[#e8ae74]" /><span className="h-2 w-2 rounded-full bg-[#e8ae74]" /><span className="h-2 w-2 rounded-full bg-[#4d6352]" /><span className="h-2 w-2 rounded-full bg-[#4d6352]" /></div><p className="mt-4 text-sm leading-5 text-[#cbd7c7]">Tu próxima sesión: 12 minutos de práctica.</p></div></section><section><div className="mb-4 flex items-baseline justify-between"><h2 className="text-2xl tracking-tight">Tus materias</h2><span className="text-sm text-[#899087]">2 recorridos</span></div><div className="grid gap-5 md:grid-cols-2">{mockSubjects.map((item) => <SubjectCard key={item.key} subject={item} onOpen={() => onOpen(item.key)} />)}</div></section><section className="border-t border-[#d8d4ca] pt-6"><div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><div><h2 className="text-xl">Diseñado para sumar otra materia sin rehacer todo.</h2><p className="mt-1 text-sm text-[#737a72]">Cuando llegue la próxima, aparecerá como un nuevo recorrido acá.</p></div><button className="rounded-full border border-[#bfc7bc] px-4 py-2 text-sm font-bold text-[#31513a]">+ Agregar materia</button></div></section></div>;
 }
 
-function MediaPreview({ media }: { media: NonNullable<Question["media"]> }) {
-  return <figure className="mb-6 overflow-hidden rounded-2xl border border-[#dedbd2] bg-[#f6f4ef]"><Image src={media.src} alt={media.alt} width={media.width ?? 1200} height={media.height ?? 900} className="max-h-[26rem] w-full object-contain" />{(media.caption || media.credit) && <figcaption className="space-y-1 px-4 py-3 text-sm leading-5 text-[#697269]">{media.caption && <div>{media.caption}</div>}{media.credit && <div className="text-xs text-[#8b9189]">{media.credit}</div>}</figcaption>}</figure>;
+function SubjectCard({ subject, onOpen }: { subject: MockSubject; onOpen: () => void }) {
+  return <button onClick={onOpen} className="group relative overflow-hidden rounded-3xl border border-[#ded9cf] bg-[#fbfaf7] p-6 text-left transition hover:-translate-y-1 hover:border-[#aebaaa] hover:shadow-[0_20px_50px_rgba(63,58,45,0.1)]"><div className="flex items-start justify-between gap-5"><div><div className="mb-3 text-xs font-bold uppercase tracking-[0.14em]" style={{ color: subject.accent }}>{subject.eyebrow}</div><h3 className="text-4xl tracking-[-0.04em]">{subject.name}</h3></div><SubjectMark subject={subject} size="small" /></div><p className="mt-6 max-w-md text-sm leading-6 text-[#697269]">{subject.description}</p><div className="mt-8 flex items-center justify-between"><div className="flex items-center gap-3"><div className="h-2 w-28 overflow-hidden rounded-full bg-[#e5e1d8]"><div className="h-full rounded-full" style={{ width: `${subject.progress}%`, backgroundColor: subject.accent }} /></div><span className="text-xs font-bold text-[#6f776e]">{subject.progress}%</span></div><span className="text-xl text-[#697269] transition group-hover:translate-x-1">→</span></div></button>;
+}
+
+function SubjectHome({ subject, onBack, onStart }: { subject: MockSubject; onBack: () => void; onStart: () => void }) {
+  return <div className="space-y-8"><button onClick={onBack} className="text-sm font-bold text-[#697269]">← Todas las materias</button><section className="grid gap-6 lg:grid-cols-[1fr_340px]"><div className="rounded-3xl p-7 md:p-10" style={{ backgroundColor: subject.soft }}><div className="flex items-start justify-between gap-6"><div><div className="mb-3 text-xs font-bold uppercase tracking-[0.16em]" style={{ color: subject.accent }}>{subject.eyebrow}</div><h1 className="text-6xl tracking-[-0.06em] md:text-8xl">{subject.name}</h1></div><SubjectMark subject={subject} size="large" /></div><p className="mt-8 max-w-xl text-lg leading-8 text-[#526056]">{subject.description}</p><div className="mt-8 flex flex-col gap-3 sm:flex-row"><button onClick={onStart} className="rounded-full px-5 py-3 text-sm font-bold text-white" style={{ backgroundColor: subject.accent }}>Empezar sesión →</button><button onClick={() => document.getElementById("recorrido")?.scrollIntoView({ behavior: "smooth" })} className="rounded-full border border-[#a9b5a7] px-5 py-3 text-sm font-bold text-[#526056]">Ver recorrido</button></div></div><div className="rounded-3xl bg-[#25342b] p-7 text-[#f7f3ea]"><div className="text-xs uppercase tracking-[0.16em] text-[#b8c8b3]">Estado actual</div><div className="mt-7 text-6xl font-bold">{subject.progress}%</div><p className="mt-2 text-sm text-[#b8c8b3]">de esta materia recorrida</p><div className="mt-8 h-2 overflow-hidden rounded-full bg-[#4d6352]"><div className="h-full rounded-full bg-[#e8ae74]" style={{ width: `${subject.progress}%` }} /></div><p className="mt-6 text-sm leading-6 text-[#cbd7c7]">La recomendación de hoy es comenzar por una tarjeta nueva y cerrar con una pregunta de desarrollo.</p></div></section><section id="recorrido"><div className="mb-4 flex items-end justify-between"><div><div className="text-xs font-bold uppercase tracking-[0.16em] text-[#899087]">Recorrido</div><h2 className="mt-1 text-3xl tracking-tight">Tu camino por la materia</h2></div><span className="text-sm text-[#899087]">3 módulos</span></div><div className="grid gap-3">{subject.modules.map((module, index) => <div key={module.name} className="flex items-center gap-4 rounded-2xl border border-[#ded9cf] bg-[#fbfaf7] p-4"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#e9e6de] text-sm font-bold text-[#6d766b]">0{index + 1}</div><div className="min-w-0 flex-1"><h3 className="font-bold">{module.name}</h3><p className="mt-1 text-sm text-[#899087]">{module.count} tarjetas · {module.state}</p></div><span className="text-[#899087]">{module.state === "Próximamente" ? "○" : "→"}</span></div>)}</div></section></div>;
+}
+
+function Session({ subject, selectedOption, showFeedback, onBack, onSelect, onReveal }: { subject: MockSubject; selectedOption: number | null; showFeedback: boolean; onBack: () => void; onSelect: (value: number) => void; onReveal: () => void }) {
+  const isPsychoDuck = subject.key === "psicopato";
+  const saniQuestion = questions[0];
+  const prompt = isPsychoDuck ? "Antes de interpretar una lámina, ¿qué conviene hacer primero?" : saniQuestion.prompt;
+  const options = isPsychoDuck ? ["Buscar inmediatamente un símbolo conocido", "Registrar la respuesta completa y la conducta antes de codificar", "Elegir la interpretación más frecuente", "Descartar las respuestas que no parezcan populares"] : saniQuestion.options ?? [];
+  const correct = isPsychoDuck ? 1 : saniQuestion.answer;
+  const isCorrect = selectedOption === correct;
+  return <div className="mx-auto max-w-4xl"><button onClick={onBack} className="mb-6 text-sm font-bold text-[#697269]">← Volver a {subject.name}</button><div className="mb-5 flex items-center justify-between text-xs font-bold uppercase tracking-[0.16em] text-[#899087]"><span>Sesión rápida · {subject.name}</span><span>01 / 10</span></div><article className="overflow-hidden rounded-3xl border border-[#ded9cf] bg-white shadow-[0_20px_70px_rgba(63,58,45,0.08)]"><div className="border-b border-[#eeeae1] px-6 py-7 md:px-10">{isPsychoDuck && <div className="mb-6 overflow-hidden rounded-2xl bg-[#f4efe5] p-5"><Image src={patoImage} alt="PsicoPato sosteniendo una lámina para analizar" width={600} height={600} unoptimized className="mx-auto h-48 w-48 rounded-xl object-cover md:h-64 md:w-64" /><p className="mt-3 text-center text-xs uppercase tracking-[0.14em] text-[#8d522f]">Mockup de análisis de lámina</p></div>}<div className="mb-4 text-xs font-bold uppercase tracking-[0.14em]" style={{ color: subject.accent }}>{isPsychoDuck ? "Análisis de imagen · Rorschach" : "Conceptos fundamentales"}</div><h1 className="max-w-3xl text-3xl leading-tight tracking-[-0.03em] md:text-5xl">{prompt}</h1></div><div className="space-y-3 px-6 py-7 md:px-10 md:py-9">{options.map((option, index) => <button key={option} disabled={showFeedback} onClick={() => onSelect(index)} className={`flex min-h-14 w-full items-start gap-4 rounded-2xl border p-4 text-left transition ${selectedOption === index ? (showFeedback ? (isCorrect ? "border-[#86a783] bg-[#e7f0e5]" : "border-[#dd9878] bg-[#fff0e8]") : "border-[#5d765a] bg-[#eef4ec]") : "border-[#e7e4dc] hover:border-[#aebaaa]"}`}><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-current text-xs font-bold">{String.fromCharCode(65 + index)}</span><span>{option}</span></button>)}{!showFeedback ? <button onClick={onReveal} disabled={selectedOption === null} className="mt-4 min-h-12 rounded-full bg-[#25342b] px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-35">Comprobar respuesta</button> : <div className="mt-5 rounded-2xl bg-[#f1f5ef] p-5"><strong className="text-[#31513a]">{isCorrect ? "Correcto" : "Pista para volver a pensarlo"}</strong><p className="mt-2 leading-7 text-[#465247]">{isPsychoDuck ? "En Rorschach, el registro de la respuesta y de la conducta precede a la codificación y a cualquier interpretación. Este mockup anticipa una experiencia donde la lámina ocupa el centro y la teoría acompaña, no tapa, la observación." : saniQuestion.explanation}</p><p className="mt-4 text-xs font-bold uppercase tracking-wider text-[#819080]">{isPsychoDuck ? "Material de prueba · futura fuente de cátedra" : saniQuestion.source}</p></div>}</div></article></div>;
+}
+
+function SubjectMark({ subject, size }: { subject: MockSubject; size: "small" | "large" }) {
+  if (subject.icon === "duck") return <Image src={patoImage} alt="PsicoPato" width={size === "large" ? 170 : 86} height={size === "large" ? 170 : 86} unoptimized className={`${size === "large" ? "h-32 w-32 md:h-40 md:w-40" : "h-16 w-16"} rounded-2xl object-cover`} />;
+  return <div className={`${size === "large" ? "h-32 w-32 text-7xl md:h-40 md:w-40 md:text-8xl" : "h-16 w-16 text-4xl"} flex items-center justify-center rounded-2xl bg-[#d9e6d6] font-bold text-[#31513a]`}>S</div>;
 }
