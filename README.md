@@ -9,6 +9,38 @@ Web app personal para preparar el parcial de Psicología Experimental de la Facu
 - Filtros por RMf, estadística, tES e integración.
 - Progreso y racha guardados en `localStorage`.
 - Preguntas versionadas en `data.ts`, con fuente indicada en cada explicación.
+- Modelo extensible de materias, unidades, tipos de pregunta y recursos visuales.
+
+## Agregar una materia
+
+En `data.ts`, agregar una entrada en `subjects`:
+
+```ts
+{
+	id: "rorschach",
+	name: "Evaluación psicológica: Rorschach",
+	shortName: "Rorschach",
+	description: "Láminas, consignas y criterios de análisis.",
+	questionTypes: ["choice", "development", "image-analysis"],
+	topics: ["Administración", "Codificación", "Interpretación"]
+}
+```
+
+Luego, cada pregunta debe indicar `subjectId` y su `type`. Para una lámina o imagen de estímulo se puede usar `media`:
+
+```ts
+media: {
+	type: "image",
+	src: "/images/rorschach/lamina-i.webp",
+	alt: "Lámina I del material de estudio",
+	width: 1200,
+	height: 900,
+	caption: "Observar primero la respuesta global y luego los detalles.",
+	credit: "Material autorizado para uso académico"
+}
+```
+
+Las imágenes deben guardarse en `public/images`. Para Rorschach conviene cargar únicamente material con permiso de uso o provisto por la cátedra, y diseñar las preguntas de imagen con contexto, zoom, alt text, fuente y criterios de respuesta antes de publicar.
 
 ## Desarrollo local
 

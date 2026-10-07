@@ -1,9 +1,50 @@
 export type Topic = "RMf" | "Estadística" | "tES" | "Integración";
+export type SubjectId = "psicologia-experimental" | (string & {});
+export type QuestionType = "choice" | "development" | "true-false" | "image-analysis";
+
+export type MediaAsset = {
+  type: "image";
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  caption?: string;
+  credit?: string;
+};
+
+export type Subject = {
+  id: SubjectId;
+  name: string;
+  shortName: string;
+  description: string;
+  questionTypes: QuestionType[];
+  topics: string[];
+};
+
+export const subjects: Subject[] = [
+  {
+    id: "psicologia-experimental",
+    name: "Psicología Experimental",
+    shortName: "Psico Experimental",
+    description: "RMf, salmón muerto, estadística y tES.",
+    questionTypes: ["choice", "development"],
+    topics: ["RMf", "Estadística", "tES", "Integración"]
+  }
+];
+
+export const questionTypeLabels: Record<QuestionType, string> = {
+  choice: "Elección múltiple",
+  development: "Desarrollo",
+  "true-false": "Verdadero o falso",
+  "image-analysis": "Análisis de imagen"
+};
 
 export type Question = {
   id: string;
-  type: "choice" | "development";
-  topic: Topic;
+  subjectId?: SubjectId;
+  type: QuestionType;
+  topic: string;
+  unit?: string;
   difficulty: "Base" | "Aplicación" | "Integración";
   prompt: string;
   options?: string[];
@@ -11,6 +52,7 @@ export type Question = {
   explanation: string;
   source: string;
   rubric?: string[];
+  media?: MediaAsset;
 };
 
 export const questions: Question[] = [
@@ -205,4 +247,3 @@ export const questions: Question[] = [
   }
 ];
 
-export const topics: Topic[] = ["RMf", "Estadística", "tES", "Integración"];
