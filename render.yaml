@@ -1,10 +1,10 @@
 services:
   - type: web
     name: repaso-psico
-    runtime: node
+    runtime: static
     plan: free
     buildCommand: npm ci && npm run build
-    startCommand: npm start
+    staticPublishPath: ./out
     envVars:
       - key: NODE_VERSION
         value: 22.13.0

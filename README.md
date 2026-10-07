@@ -30,18 +30,18 @@ npm run build
 
 ## Deploy en Render
 
-Crear un servicio **Web Service** conectado al repositorio con estos valores:
+La versión actual no necesita servidor: es una **Static Site** porque el banco es estático y el progreso se guarda en el navegador. Crear un servicio **Static Site** conectado al repositorio con estos valores:
 
 - **Root Directory:** `estudio-psico` si el repositorio conserva el PDF en la raíz.
-- **Build Command:** `npm install && npm run build`
-- **Start Command:** `npm start`
+- **Build Command:** `npm ci && npm run build`
+- **Publish Directory:** `out`
 - **Environment:** Node
 
-Render asigna automáticamente `PORT`; Next.js lo utiliza al iniciar con `npm start`.
+La configuración ya está declarada en `render.yaml`, por lo que Render puede detectarla al crear un Blueprint.
 
 ## Próxima fase: backend
 
-Esta primera versión no necesita backend: el banco es contenido estático y el progreso es personal. Si se agregan cuentas, sincronización entre dispositivos o edición desde la app, la opción simple es Supabase free con tablas para `questions`, `sources`, `attempts` y `users`. Conviene migrar después de probar el método de estudio y revisar el banco con la cátedra.
+Esta primera versión no necesita backend: el banco es contenido estático y el progreso es personal. Si se agregan cuentas, sincronización entre dispositivos o edición desde la app, la opción simple es Supabase free con tablas para `questions`, `sources`, `attempts` y `users`. En ese momento se puede mantener este Static Site y conectar una API externa, o volver a un Web Service si se incorpora un servidor Next.js.
 
 ## Fuentes base
 
