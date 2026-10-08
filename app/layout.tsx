@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Núcleo | Psicología Experimental",
-  description: "Repaso activo de RMf, salmón muerto y tES.",
+  title: "Núcleo | Repaso de Psicología",
+  description: "Practicá Psicología Experimental y Sanitaria con preguntas, casos y repaso por examen.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

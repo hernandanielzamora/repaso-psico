@@ -17,7 +17,7 @@ export function FocusHeading({ children, className = "" }: { children: React.Rea
 
 type Result = { question: Question; mastered: boolean };
 
-export function Session({ subject, bank }: { subject: Subject; bank: Question[] }) {
+export function Session({ subject, bank, context }: { subject: Subject; bank: Question[]; context?: string }) {
   const [queue, setQueue] = useState(bank);
   const [index, setIndex] = useState(0);
   const [results, setResults] = useState<Result[]>([]);
@@ -36,6 +36,7 @@ export function Session({ subject, bank }: { subject: Subject; bank: Question[] 
   if (!queue.length) return <div className="panel"><FocusHeading>No hay preguntas disponibles</FocusHeading><a className={secondary} href={subjectHref(subject.id)}>Volver a la materia</a></div>;
   return <div className="mx-auto max-w-4xl">
     <a className={`${secondary} mb-6`} href={subjectHref(subject.id)}>← Volver a la materia</a>
+    {context && <p className="mb-5 text-sm font-bold text-[#526056]">{context}</p>}
     {subject.demo && <p className="mb-5 rounded-xl bg-[#fff0d7] p-4">Demo: ejercicios para probar el recorrido, sin contenido de cátedra.</p>}
     {finished ? <section className="panel space-y-6">
       <FocusHeading className="text-4xl">Sesión completada</FocusHeading><p>Revisaste {results.length} preguntas de {subject.name}.</p>
@@ -62,6 +63,7 @@ function QuestionCard({ question, last, onRecord, onNext }: { question: Question
   const feedback = useRef<HTMLDivElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const hasOptions = !!question.options?.length;
+  const oral = question.type === "flashcard";
   const correct = selected === question.answer;
   useEffect(() => { if (revealed) feedback.current?.focus({ preventScroll: false }); }, [revealed]);
   useEffect(() => { if (zoom) dialog.current?.showModal(); else dialog.current?.close(); }, [zoom]);
@@ -71,7 +73,7 @@ function QuestionCard({ question, last, onRecord, onNext }: { question: Question
     onRecord(question, mastered);
   }
   function reveal() {
-    if (revealed || (hasOptions ? selected === null : !answer.trim())) return;
+    if (revealed || (hasOptions ? selected === null : !oral && !answer.trim())) return;
     setRevealed(true);
     if (hasOptions) record(correct);
   }
@@ -81,7 +83,7 @@ function QuestionCard({ question, last, onRecord, onNext }: { question: Question
   }
   return <article className="overflow-hidden rounded-3xl border border-[#ded9cf] bg-[#fbfaf7]">
     <div className="border-b border-[#ded9cf] p-5 sm:p-8">
-      <p className="eyebrow mb-4">{questionTypeLabels[question.type]} · {question.topic} · {question.difficulty}</p>
+      <p className="eyebrow mb-4">{question.unit && `Unidad ${question.unit.slice(1)} · `}{questionTypeLabels[question.type]} · {question.topic} · {question.difficulty}{question.finalOnly && " · Integradora de final"}</p>
       <FocusHeading className="text-3xl leading-tight tracking-tight sm:text-4xl">{question.prompt}</FocusHeading>
       {question.media && <figure className="mt-6">
         {imageFailed ? <p role="status" className="rounded-xl bg-[#fff0d7] p-4">No se pudo cargar la imagen. Descripción: {question.media.alt}</p> : <button aria-label="Ampliar imagen" className="block w-full rounded-2xl bg-[#f4f1eb] p-2" onClick={() => setZoom(true)}><Image src={question.media.src} alt={question.media.alt} width={question.media.width ?? 800} height={question.media.height ?? 480} onError={() => setImageFailed(true)} className="mx-auto h-auto max-h-96 w-full object-contain" /><span className="mt-2 block text-sm underline">Ampliar imagen</span></button>}
@@ -91,8 +93,9 @@ function QuestionCard({ question, last, onRecord, onNext }: { question: Question
     </div>
     <div className="space-y-5 p-5 sm:p-8">
       {hasOptions ? <fieldset disabled={revealed} className="space-y-3"><legend className="mb-3 font-bold">Elegí una respuesta</legend>{question.options!.map((option, optionIndex) => <label key={optionIndex} className={`option ${selected === optionIndex ? "option-selected" : ""} ${revealed && optionIndex === question.answer ? "option-correct" : ""} ${revealed && selected === optionIndex && !correct ? "option-incorrect" : ""}`}><input type="radio" name={question.id} checked={selected === optionIndex} onChange={() => setSelected(optionIndex)} /><span><span className="mr-2 font-bold">{String.fromCharCode(65 + optionIndex)}.</span>{option}{revealed && optionIndex === question.answer && <strong className="mt-2 block">Respuesta correcta</strong>}{revealed && selected === optionIndex && !correct && <strong className="mt-2 block">Tu respuesta — incorrecta</strong>}</span></label>)}</fieldset>
-        : <div><label htmlFor="written-answer" className="mb-3 block font-bold">Tu respuesta</label><textarea id="written-answer" rows={7} maxLength={20000} value={answer} readOnly={revealed} onChange={(event) => setAnswer(event.target.value)} placeholder="Explicalo con tus palabras antes de consultar la guía…" /><p className="mt-2 text-sm text-[#526056]">La revisión es una autoevaluación con criterios; no una corrección automática. El texto no se guarda al salir de la sesión.</p></div>}
-      {!revealed ? <button className={primary} disabled={hasOptions ? selected === null : !answer.trim()} onClick={reveal}>{hasOptions ? "Comprobar respuesta" : "Ver guía de respuesta"}</button>
+        : oral ? <p className="rounded-xl bg-[#e3eee1] p-5 leading-7">Respondé en voz alta o mentalmente, sin mirar el material. Después compará con la guía y marcá si lo pudiste explicar. No se graba audio.</p>
+          : <div><label htmlFor="written-answer" className="mb-3 block font-bold">Tu respuesta</label><textarea id="written-answer" rows={7} maxLength={20000} value={answer} readOnly={revealed} onChange={(event) => setAnswer(event.target.value)} placeholder="Explicalo con tus palabras antes de consultar la guía…" /><p className="mt-2 text-sm text-[#526056]">La revisión es una autoevaluación con criterios; no una corrección automática. El texto no se guarda al salir de la sesión.</p></div>}
+      {!revealed ? <button className={primary} disabled={hasOptions ? selected === null : !oral && !answer.trim()} onClick={reveal}>{hasOptions ? "Comprobar respuesta" : "Ver guía de respuesta"}</button>
         : <div ref={feedback} tabIndex={-1} className="space-y-4 rounded-2xl bg-[#eaf0e6] p-5">
           <h2 className="text-2xl">{hasOptions ? correct ? "¡Correcto!" : "Respuesta incorrecta" : "Guía de autoevaluación"}</h2>
           <p className="leading-7">{question.explanation}</p>

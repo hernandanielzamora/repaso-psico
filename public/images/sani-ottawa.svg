@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600" viewBox="0 0 900 600">
+ <rect width="900" height="600" rx="24" fill="#f4f1eb"/>
+ <g font-family="Arial,sans-serif" fill="#25342b">
+  <text x="450" y="46" text-anchor="middle" font-size="25">Cinco acciones para un barrio · ejemplos didácticos</text>
+  <g fill="#e3eee1"><rect x="40" y="85" width="820" height="76" rx="16"/><rect x="40" y="179" width="820" height="76" rx="16"/><rect x="40" y="273" width="820" height="76" rx="16"/><rect x="40" y="367" width="820" height="76" rx="16"/><rect x="40" y="461" width="820" height="90" rx="16"/></g>
+  <g font-size="23"><text x="65" y="131">A · Política de vivienda saludable</text><text x="65" y="225">B · Espacios públicos seguros</text><text x="65" y="319">C · Consejo barrial con poder de decisión</text><text x="65" y="413">D · Talleres para desarrollar capacidades</text><text x="65" y="500">E · Servicio de salud reorganizado</text><text x="105" y="531">con la comunidad</text></g>
+ </g>
+</svg>

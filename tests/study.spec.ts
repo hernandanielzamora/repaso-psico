@@ -116,16 +116,7 @@ test("filters handle empty results and topic buttons use actual questions", asyn
 });
 
 test("demos are isolated, finish, and never count towards academic progress", async ({ page }) => {
-  await page.goto("/#subject/sani");
-  await page.getByLabel("Forma de practicar").selectOption("choice");
-  await page.getByRole("button", { name: "Probar sesión" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("pregunta de prueba");
-  await page.getByRole("radio").first().check();
-  await page.getByRole("button", { name: "Comprobar respuesta" }).click();
-  await page.getByRole("button", { name: "Ver resultados" }).click();
-  await page.getByRole("link", { name: "Todas las materias", exact: true }).click();
-  await expect(page.getByText("0 / 13 preguntas", { exact: true })).toBeVisible();
-  await page.locator('a[href="#subject/psicopato"]').click();
+  await page.goto("/#subject/psicopato");
   await page.getByRole("button", { name: "Probar sesión" }).click();
   await expect(page.getByText("Imagen de demostración. No es una lámina de Rorschach.", { exact: true })).toBeVisible();
   await page.getByLabel("Tu respuesta", { exact: true }).fill("Dos círculos, un triángulo y un rectángulo.");
@@ -133,6 +124,9 @@ test("demos are isolated, finish, and never count towards academic progress", as
   await page.getByRole("button", { name: "Lo pude explicar" }).click();
   await page.getByRole("button", { name: "Ver resultados" }).click();
   await expect(page.getByRole("heading", { name: "Sesión completada" })).toBeVisible();
+  await page.getByRole("link", { name: "Todas las materias", exact: true }).click();
+  const total = questions.filter((question) => !subjects.find((subject) => subject.id === question.subjectId)?.demo).length;
+  await expect(page.getByText(`0 / ${total} preguntas`, { exact: true })).toBeVisible();
 });
 
 test("corrupt and unavailable storage do not prevent study", async ({ page }) => {
@@ -155,7 +149,7 @@ test("corrupt and unavailable storage do not prevent study", async ({ page }) =>
 
 test("all screens fit a narrow mobile viewport", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 740 });
-  for (const hash of ["", "#subject/psicologia-experimental", "#session/psicologia-experimental", "#subject/psicopato", "#session/psicopato"]) {
+  for (const hash of ["", "#subject/psicologia-experimental", "#session/psicologia-experimental", "#subject/psicopato", "#session/psicopato", "#subject/sani", "#session/sani"]) {
     await page.goto(`/${hash}`);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);

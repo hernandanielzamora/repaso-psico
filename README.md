@@ -2,7 +2,15 @@
 
 Web app de repaso para Psicología, UNC. Experimental conserva las 12 preguntas originales del resumen (9 choice y 3 desarrollos) y agrega 1 pregunta visual: 13 en total. Es un banco inicial, no una cobertura exhaustiva de las 26 páginas del PDF.
 
-Sani y PsicoPato son demos explícitas, con ejercicios propios y progreso separado. La imagen geométrica de PsicoPato no es una lámina de Rorschach.
+Psicología Sanitaria (Sani) incluye 95 actividades basadas en las cinco unidades de `Sani Final PDF.pdf`: choice, verdadero/falso, desarrollo, casos, tarjetas orales y análisis de esquemas. Cada actividad tiene explicación y páginas de referencia. PsicoPato sigue siendo una demo; su imagen geométrica no es una lámina de Rorschach.
+
+## Preparar Sani
+
+Elegir **Primer parcial**, **Segundo parcial** o **Final**. El PDF no establece qué unidades corresponden a cada parcial: la app permite seleccionarlas y guarda ambas selecciones por separado en el navegador. El final incluye las cinco unidades y seis consignas integradoras.
+
+Se puede filtrar por tema o modalidad, practicar hasta 10 o 20 actividades o todas, variar el orden y repasar únicamente pendientes. Las sesiones cortas distribuyen actividades entre las unidades elegidas. Las tarjetas orales permiten responder mentalmente o en voz alta antes de revelar la guía; no graban audio ni califican automáticamente.
+
+Mapa de fuentes, criterios editoriales y cobertura: [docs/SANI.md](docs/SANI.md).
 
 ## Funcionalidad
 
@@ -42,9 +50,9 @@ npm start
 
 ## Agregar contenido
 
-`data.ts` es la fuente única de materias y preguntas. Cada materia declara un ID estable de letras, números y guiones, nombre, descripción, temas, modalidades y presentación (`accent`, `soft`, `mark`). `demo: true` la excluye del progreso académico global.
+`data.ts` reúne el catálogo y el banco de preguntas; `content/sani.ts` contiene el contenido de Sanitaria. Cada materia declara un ID estable de letras, números y guiones, nombre, descripción, temas, modalidades y presentación (`accent`, `soft`, `mark`). `demo: true` la excluye del progreso académico global. `units` agrega organización por unidades y preparación por examen.
 
-Cada pregunta requiere ID único y estable, `subjectId`, `type`, `topic`, `difficulty`, consigna, explicación y fuente. Choice/verdadero-falso requieren `options` y el índice correcto en `answer`. Las respuestas escritas requieren `rubric`. Las imágenes usan `media` con `src`, `alt`, dimensiones, descripción y crédito. Los archivos van en `public/images`.
+Cada pregunta requiere ID único y estable, `subjectId`, `type`, `topic`, `difficulty`, consigna, explicación y fuente. Choice/verdadero-falso requieren `options` y el índice correcto en `answer`. Desarrollo, casos, imágenes y tarjetas orales requieren `rubric`. Las imágenes usan `media` con `src`, `alt`, dimensiones, descripción y crédito. Los archivos van en `public/images`. En Sani, `unit` y `sourcePages` ubican el contenido en el PDF; `finalOnly` reserva una consigna integradora para el final.
 
 Las cantidades se calculan desde el banco. Las pruebas validan IDs, pertenencia a materias, respuestas, rúbricas y recursos.
 

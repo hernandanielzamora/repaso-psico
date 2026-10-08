@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/.scratch/
 /test-results/
 /playwright-report/
 

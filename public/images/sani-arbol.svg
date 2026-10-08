@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="540" viewBox="0 0 900 540">
+ <rect width="900" height="540" rx="24" fill="#f4f1eb"/>
+ <g font-family="Arial,sans-serif" fill="#25342b" text-anchor="middle">
+  <text x="450" y="45" font-size="25">Árbol de problemas · caso ficticio</text>
+  <path d="M240 380L450 310 660 380M450 225L240 160M450 225L660 160" stroke="#526056" stroke-width="4" fill="none"/>
+  <g fill="#e3eee1"><rect x="60" y="85" width="360" height="85" rx="16"/><rect x="480" y="85" width="360" height="85" rx="16"/></g>
+  <g font-size="23"><text x="240" y="135">Demoras en la atención</text><text x="660" y="124">Discontinuidad</text><text x="660" y="152">de la atención</text></g>
+  <rect x="150" y="225" width="600" height="85" rx="16" fill="#d9e6d6"/><text x="450" y="275" font-size="25">Dificultades para acceder a turnos</text>
+  <g fill="#fff0d7"><rect x="60" y="380" width="360" height="85" rx="16"/><rect x="480" y="380" width="360" height="85" rx="16"/></g>
+  <g font-size="23"><text x="240" y="418">Horarios incompatibles</text><text x="240" y="447">con el trabajo</text><text x="660" y="431">Transporte costoso</text></g>
+  <text x="450" y="515" font-size="18">Hipótesis para contrastar con datos y participación comunitaria</text>
+ </g>
+</svg>

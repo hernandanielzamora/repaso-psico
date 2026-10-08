@@ -1,6 +1,10 @@
+import { saniQuestions, saniTopics, saniUnits } from "./content/sani";
+
 export type Topic = "RMf" | "Estadística" | "tES" | "Integración";
 export type SubjectId = "psicologia-experimental" | (string & {});
-export type QuestionType = "choice" | "development" | "true-false" | "image-analysis";
+export type QuestionType = "choice" | "development" | "true-false" | "image-analysis" | "case-study" | "flashcard";
+
+export type StudyUnit = { id: string; name: string; pages: [number, number] };
 
 export type MediaAsset = {
   type: "image";
@@ -23,6 +27,8 @@ export type Subject = {
   accent: string;
   soft: string;
   mark: string;
+  units?: StudyUnit[];
+  studyNote?: string;
 };
 
 export const subjects: Subject[] = [
@@ -36,10 +42,12 @@ export const subjects: Subject[] = [
     accent: "#31513a", soft: "#e3eee1", mark: "E"
   },
   {
-    id: "sani", name: "Sani", shortName: "Sani",
-    description: "Probá el recorrido de estudio. El material de esta materia todavía no está cargado.",
-    questionTypes: ["choice", "development"], topics: ["Demostración"],
-    demo: true, accent: "#31513a", soft: "#e3eee1", mark: "S"
+    id: "sani", name: "Psicología Sanitaria", shortName: "Sani",
+    description: "Cinco unidades para preparar tus parciales y el final: conceptos, derechos, epidemiología y práctica comunitaria.",
+    questionTypes: ["choice", "true-false", "development", "case-study", "flashcard", "image-analysis"],
+    topics: saniTopics, units: saniUnits,
+    studyNote: "Actividades basadas en Sani Final PDF (107 páginas). Los casos y esquemas son ejercicios didácticos. Las referencias legales e históricas se estudian según el resumen, no como una actualización normativa.",
+    accent: "#31513a", soft: "#e3eee1", mark: "S"
   },
   {
     id: "psicopato", name: "PsicoPato", shortName: "PsicoPato",
@@ -53,7 +61,9 @@ export const questionTypeLabels: Record<QuestionType, string> = {
   choice: "Elección múltiple",
   development: "Desarrollo",
   "true-false": "Verdadero o falso",
-  "image-analysis": "Análisis de imagen"
+  "image-analysis": "Análisis de imagen",
+  "case-study": "Casos de aplicación",
+  flashcard: "Repaso oral con tarjetas"
 };
 
 export type Question = {
@@ -62,6 +72,8 @@ export type Question = {
   type: QuestionType;
   topic: string;
   unit?: string;
+  finalOnly?: boolean;
+  sourcePages?: [number, number];
   difficulty: "Base" | "Aplicación" | "Integración";
   prompt: string;
   options?: string[];
@@ -274,18 +286,6 @@ const experimentalQuestions: Omit<Question, "subjectId">[] = [
 
 const demoQuestions: Question[] = [
   {
-    id: "sani-demo-choice", subjectId: "sani", type: "choice", topic: "Demostración", difficulty: "Base",
-    prompt: "Esta es una pregunta de prueba del recorrido. ¿Qué botón permite revisar tu elección?",
-    options: ["Comprobar respuesta", "Todas las materias", "Volver a la materia"], answer: 0,
-    explanation: "Comprobar respuesta muestra la explicación. Después podés avanzar hasta el resultado de la sesión.", source: "Demostración de la interfaz; no es contenido académico."
-  },
-  {
-    id: "sani-demo-development", subjectId: "sani", type: "development", topic: "Demostración", difficulty: "Base",
-    prompt: "Para probar el modo de desarrollo, escribí cómo organizarías una sesión de repaso.",
-    explanation: "Podés elegir un tema, responder sin mirar el material y contrastar tu respuesta con los criterios. Esta consigna solo demuestra el funcionamiento de la interfaz.",
-    rubric: ["Propone un tema o una meta de repaso.", "Incluye una forma de revisar lo aprendido."], source: "Demostración de la interfaz; no es contenido académico."
-  },
-  {
     id: "psicopato-demo-image", subjectId: "psicopato", type: "image-analysis", topic: "Demostración", difficulty: "Base",
     prompt: "Describí las formas y su distribución en esta imagen de demostración.",
     explanation: "Hay dos círculos en la parte superior, un triángulo en el centro y un rectángulo en la parte inferior. El objetivo es probar la observación, la ampliación y la respuesta escrita. No es una lámina de Rorschach ni permite una interpretación psicológica.",
@@ -296,6 +296,7 @@ const demoQuestions: Question[] = [
 
 export const questions: Question[] = [
   ...experimentalQuestions.map((question) => ({ ...question, subjectId: "psicologia-experimental" })),
+  ...saniQuestions,
   ...demoQuestions
 ];
 
