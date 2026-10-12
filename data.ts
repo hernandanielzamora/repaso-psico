@@ -45,7 +45,7 @@ export const subjects: Subject[] = [
   {
     id: "psicologia-experimental",
     name: "Psicología Experimental TP",
-    shortName: "Psico Experimental",
+    shortName: "Psico Experimental TP",
     description: "RMf, salmón muerto, estadística y tES.",
     questionTypes: ["choice", "development", "image-analysis"],
     topics: ["RMf", "Estadística", "tES", "Integración"],
