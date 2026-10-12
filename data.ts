@@ -1,4 +1,5 @@
 import { saniQuestions, saniTopics, saniUnits } from "./content/sani";
+import { psicobioQuestions, psicobioTopics, psicobioUnits } from "./content/psicobio";
 
 export type Topic = "RMf" | "Estadística" | "tES" | "Integración";
 export type SubjectId = "psicologia-experimental" | (string & {});
@@ -29,9 +30,18 @@ export type Subject = {
   mark: string;
   units?: StudyUnit[];
   studyNote?: string;
+  materialExam?: "second";
 };
 
 export const subjects: Subject[] = [
+  {
+    id: "psicobiologia-experimental", name: "Psicobiología Experimental", shortName: "Psicobiología",
+    description: "Segundo parcial: genética y desarrollo, problemas de salud mental y psicofarmacología. Practicá conceptos, compará autores y analizá diseños experimentales.",
+    questionTypes: ["choice", "true-false", "development", "case-study", "flashcard"],
+    topics: psicobioTopics, units: psicobioUnits, materialExam: "second",
+    studyNote: "Basado en Resumen Expe Express 2026, Parcial 2 (70 páginas): unidades 4, 5 y 6. Este material no cubre el primer parcial ni el final completo. Las posturas críticas se atribuyen a sus autores; los casos son ejercicios didácticos de análisis, no indicaciones clínicas.",
+    accent: "#414d78", soft: "#e8eaf5", mark: "B"
+  },
   {
     id: "psicologia-experimental",
     name: "Psicología Experimental",
@@ -297,6 +307,7 @@ const demoQuestions: Question[] = [
 export const questions: Question[] = [
   ...experimentalQuestions.map((question) => ({ ...question, subjectId: "psicologia-experimental" })),
   ...saniQuestions,
+  ...psicobioQuestions,
   ...demoQuestions
 ];
 

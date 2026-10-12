@@ -10,12 +10,12 @@ export const examLabels: Record<Exam, string> = { first: "Primer parcial", secon
 export function StudySetup({ subject, progress, onStart }: { subject: Subject; progress: Progress; onStart: (bank: Question[], context?: string) => void }) {
   const [mode, setMode] = useState<Mode>("all");
   const [topic, setTopic] = useState("all");
-  const [exam, setExam] = useState<Exam>("final");
+  const [exam, setExam] = useState<Exam>(subject.materialExam ?? "final");
   const [limit, setLimit] = useState(subject.units ? "10" : "all");
   const [randomize, setRandomize] = useState(!!subject.units);
   const [onlyPending, setOnlyPending] = useState(false);
   const { preferences, warning } = useExamPreferences();
-  const unitIds = exam === "final" ? subject.units?.map((unit) => unit.id) : preferences[subject.id]?.[exam] ?? [];
+  const unitIds = subject.materialExam || exam === "final" ? subject.units?.map((unit) => unit.id) : preferences[subject.id]?.[exam] ?? [];
   const scope: StudyScope = subject.units ? { unitIds, includeFinalOnly: exam === "final" } : {};
   const pool = selectQuestions(subject.id, mode, topic, scope);
   const selected = onlyPending ? pool.filter((question) => progress[question.id]?.mastered === false) : pool;
@@ -37,8 +37,8 @@ export function StudySetup({ subject, progress, onStart }: { subject: Subject; p
     <section className="panel" aria-labelledby="preparar">
       <h2 id="preparar" className="text-3xl">Prepará tu sesión</h2>
       {subject.units && <div className="mt-6 space-y-5">
-        <label htmlFor="exam" className="block font-bold">Estoy preparando<select id="exam" value={exam} onChange={(event) => changeExam(event.target.value as Exam)}>{Object.entries(examLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-        {exam === "final" ? <p className="text-[#526056]">El final incluye las cinco unidades y consignas integradoras. Podés acotar la práctica por tema o modalidad.</p> : <fieldset className="rounded-2xl border border-[#d8d4ca] p-4">
+        {subject.materialExam ? <p className="text-[#526056]"><strong>{examLabels[subject.materialExam]}</strong> · Unidades {subject.units.map((unit) => unit.id.slice(1)).join(", ")}. Podés acotar la práctica por tema, unidad o modalidad.</p> : <label htmlFor="exam" className="block font-bold">Estoy preparando<select id="exam" value={exam} onChange={(event) => changeExam(event.target.value as Exam)}>{Object.entries(examLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>}
+        {subject.materialExam ? null : exam === "final" ? <p className="text-[#526056]">El final incluye las {subject.units.length} unidades disponibles y consignas integradoras. Podés acotar la práctica por tema o modalidad.</p> : <fieldset className="rounded-2xl border border-[#d8d4ca] p-4">
           <legend className="px-2 font-bold">Unidades de tu {exam === "first" ? "primer" : "segundo"} parcial</legend>
           <p className="mb-3 text-sm text-[#526056]">El PDF no indica el corte de los parciales. Marcá las unidades que entran según tu cátedra. Esta selección es personal y se guarda en este navegador.</p>
           <div className="grid gap-2 sm:grid-cols-2">{subject.units.map((unit) => <label key={unit.id} className="flex min-h-12 cursor-pointer items-start gap-3 rounded-xl bg-[#f4f1eb] p-3"><input className="mt-1 h-5 w-5 shrink-0 accent-[#31513a]" type="checkbox" checked={unitIds?.includes(unit.id) ?? false} onChange={(event) => toggleUnit(unit.id, event.target.checked)} /><span>{unit.name}<span className="block text-xs text-[#526056]">PDF: pp. {unit.pages[0]}–{unit.pages[1]}</span></span></label>)}</div>

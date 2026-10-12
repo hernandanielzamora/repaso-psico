@@ -4,6 +4,10 @@ Web app de repaso para Psicología, UNC. Experimental conserva las 12 preguntas 
 
 Psicología Sanitaria (Sani) incluye 95 actividades basadas en las cinco unidades de `Sani Final PDF.pdf`: choice, verdadero/falso, desarrollo, casos, tarjetas orales y análisis de esquemas. Cada actividad tiene explicación y páginas de referencia. PsicoPato sigue siendo una demo; su imagen geométrica no es una lámina de Rorschach.
 
+## Preparar Psicobiología Experimental
+
+Psicobiología Experimental cuenta con una sección propia para el **segundo parcial**, basada en el resumen local de 70 páginas: unidades 4, 5 y 6. Incluye preguntas, verdadero/falso, desarrollos, casos y tarjetas orales con referencias por página, sesiones cortas y pendientes. No cubre el primer parcial ni el final completo. Detalles: [docs/PSICOBIO.md](docs/PSICOBIO.md). El PDF fuente está excluido de Git y no se publica con la aplicación.
+
 ## Preparar Sani
 
 Elegir **Primer parcial**, **Segundo parcial** o **Final**. El PDF no establece qué unidades corresponden a cada parcial: la app permite seleccionarlas y guarda ambas selecciones por separado en el navegador. El final incluye las cinco unidades y seis consignas integradoras.

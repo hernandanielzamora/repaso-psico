@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Núcleo | Repaso de Psicología",
-  description: "Practicá Psicología Experimental y Sanitaria con preguntas, casos y repaso por examen.",
+  description: "Practicá Psicología Experimental, Psicobiología Experimental y Sanitaria con preguntas, casos y repaso por examen.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

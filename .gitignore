@@ -24,6 +24,8 @@
 /build
 
 # misc
+# Material de estudio privado (no publicar en GitHub)
+/Resumen Expe Express 2026 Parcial 2 Full.pdf
 .DS_Store
 *.pem
 
