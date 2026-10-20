@@ -6,6 +6,8 @@ Psicología Sanitaria (Sani) incluye 95 actividades basadas en las cinco unidade
 
 ## Preparar Psicobiología Experimental
 
+El módulo **Psicobiología Experimental · TP 1** agrega 48 actividades basadas en `Resumen_Psicobiologia_Experimental.pdf` (18 páginas): Gómez Iñiguez, Luna, Funes–Lupiáñez y entrevista Lipina–Posner, más integración. Incluye seis modalidades y dos imágenes didácticas. Está separado del segundo parcial, con progreso propio. Cobertura y criterios: [docs/ATENCION-TP1.md](docs/ATENCION-TP1.md).
+
 Psicobiología Experimental cuenta con una sección propia para el **segundo parcial**, basada en el resumen local de 70 páginas: unidades 4, 5 y 6. Incluye preguntas, verdadero/falso, desarrollos, casos y tarjetas orales con referencias por página, sesiones cortas y pendientes. No cubre el primer parcial ni el final completo. Detalles: [docs/PSICOBIO.md](docs/PSICOBIO.md). El PDF fuente está excluido de Git y no se publica con la aplicación.
 
 ## Preparar Sani

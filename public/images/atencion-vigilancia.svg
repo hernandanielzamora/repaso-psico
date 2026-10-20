@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="540" viewBox="0 0 900 540" role="img" aria-labelledby="title desc">
+<title id="title">Nivel global y cambio temporal de vigilancia</title><desc id="desc">Datos ficticios: A desciende de 90 a 60 por ciento y B se mantiene en 75. Ambas medias son 75.</desc>
+<rect width="900" height="540" rx="24" fill="#f7f3ea"/>
+<g font-family="Arial, sans-serif" fill="#25342b"><text x="40" y="48" font-size="28" font-weight="bold">¿Mismo promedio, misma trayectoria?</text><text x="40" y="80" font-size="19">Datos ficticios · Aciertos (%) · Eje vertical de 0 a 100</text></g>
+<g stroke="#d8d4ca"><path d="M100 110H740 M100 177.5H740 M100 245H740 M100 312.5H740 M100 380H740"/></g>
+<path d="M100 110V380H740" fill="none" stroke="#25342b" stroke-width="2"/>
+<g font-family="Arial, sans-serif" font-size="19" fill="#25342b"><text x="55" y="117">100</text><text x="65" y="184">75</text><text x="65" y="252">50</text><text x="65" y="320">25</text><text x="75" y="387">0</text><text x="115" y="415">0–10</text><text x="307" y="415">10–20</text><text x="497" y="415">20–30</text><text x="687" y="415">30–40</text><text x="300" y="451">Minutos en tarea</text></g>
+<path d="M140 137L330 164L520 191L710 218" fill="none" stroke="#8d522f" stroke-width="5"/><path d="M140 177.5H710" fill="none" stroke="#375d70" stroke-width="5" stroke-dasharray="12 6"/>
+<g font-family="Arial, sans-serif" font-size="20" font-weight="bold"><text x="757" y="224" fill="#8d522f">A</text><text x="757" y="184" fill="#375d70">B</text></g>
+<g font-family="Arial, sans-serif" font-size="18" fill="#25342b"><text x="40" y="488">A: 90 → 80 → 70 → 60 % · B: 75 → 75 → 75 → 75 %</text><text x="40" y="518">Promedio de ambas: 75 % · No son condiciones reales del estudio.</text></g></svg>

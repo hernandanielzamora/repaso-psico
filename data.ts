@@ -1,5 +1,6 @@
 import { saniQuestions, saniTopics, saniUnits } from "./content/sani";
 import { psicobioQuestions, psicobioTopics, psicobioUnits } from "./content/psicobio";
+import { atencionQuestions, atencionTopics, atencionUnits } from "./content/atencion";
 
 export type Topic = "RMf" | "Estadística" | "tES" | "Integración";
 export type SubjectId = "psicologia-experimental" | (string & {});
@@ -31,9 +32,18 @@ export type Subject = {
   units?: StudyUnit[];
   studyNote?: string;
   materialExam?: "second";
+  materialLabel?: string;
 };
 
 export const subjects: Subject[] = [
+  {
+    id: "psicobiologia-tp1", name: "Psicobiología Experimental · TP 1", shortName: "Psicobiología TP 1",
+    description: "Atención y vigilancia: sueño, redes atencionales, diseños experimentales y aplicaciones sociales. Cuatro lecturas y una sección integradora.",
+    questionTypes: ["choice", "true-false", "development", "case-study", "flashcard", "image-analysis"],
+    topics: atencionTopics, units: atencionUnits, materialLabel: "TP evaluativo 1",
+    studyNote: "Basado en Resumen_Psicobiologia_Experimental.pdf (18 páginas). Los bloques siguen las cuatro lecturas del resumen, no las unidades oficiales del programa. Sirve para repasar estos textos para el TP, parcial o final; no cubre la materia completa. Los casos y gráficos son didácticos.",
+    accent: "#375d70", soft: "#e5eff3", mark: "A"
+  },
   {
     id: "psicobiologia-experimental", name: "Psicobiología Experimental", shortName: "Psicobiología",
     description: "Segundo parcial: genética y desarrollo, problemas de salud mental y psicofarmacología. Practicá conceptos, compará autores y analizá diseños experimentales.",
@@ -308,6 +318,7 @@ export const questions: Question[] = [
   ...experimentalQuestions.map((question) => ({ ...question, subjectId: "psicologia-experimental" })),
   ...saniQuestions,
   ...psicobioQuestions,
+  ...atencionQuestions,
   ...demoQuestions
 ];
 
