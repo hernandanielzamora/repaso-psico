@@ -4,6 +4,9 @@ import { useState } from "react";
 import { questionTypeLabels, type Question, type Subject } from "@/data";
 import { buildSession, selectQuestions, type Mode, type Progress, type StudyScope } from "@/lib/study";
 import { setExamUnits, useExamPreferences, type Exam } from "@/lib/exam-store";
+import { avoidRepeatedPlate, balanceQuestionTypes } from "@/lib/proyectivas";
+
+let lastProjectionPlate: number | undefined;
 
 export const examLabels: Record<Exam, string> = { first: "Primer parcial", second: "Segundo parcial", final: "Final" };
 
@@ -29,7 +32,15 @@ export function StudySetup({ subject, progress, onStart }: { subject: Subject; p
     setTopic("all");
   }
   function start(bank: Question[], label = context) {
-    const prepared = buildSession(bank, limit === "all" ? bank.length : Number(limit), randomize);
+    const count = limit === "all" ? bank.length : Number(limit);
+    let prepared = subject.id === "proyectivas" ? balanceQuestionTypes(buildSession(bank, bank.length, randomize), count) : buildSession(bank, count, randomize);
+    if (subject.id === "proyectivas" && bank.length && bank.every((q) => q.type === "plate-significance")) {
+      let previous = lastProjectionPlate;
+      try { previous = Number(sessionStorage.getItem("nucleo-proy-first-plate")) || previous; } catch {}
+      prepared = avoidRepeatedPlate(prepared, previous);
+      lastProjectionPlate = prepared[0]?.projection?.plate;
+      try { sessionStorage.setItem("nucleo-proy-first-plate", String(lastProjectionPlate)); } catch {}
+    }
     if (prepared.length) onStart(prepared, label);
   }
 

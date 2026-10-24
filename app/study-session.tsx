@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { questionTypeLabels, type Question, type Subject } from "@/data";
 import { recordReview } from "@/lib/progress-store";
+import { ProjectionQuestion } from "./projection-question";
 
 const primary = "button button-primary";
 const secondary = "button button-secondary";
@@ -32,7 +33,8 @@ export function Session({ subject, bank, context }: { subject: Subject; bank: Qu
   }
   const pending = results.filter((result) => !result.mastered).map((result) => result.question);
   const objective = results.filter((result) => result.question.options?.length);
-  const written = results.filter((result) => !result.question.options?.length);
+  const structured = results.filter((result) => result.question.projection?.rows || result.question.projection?.phenomenon);
+  const written = results.filter((result) => !result.question.options?.length && !result.question.projection?.rows && !result.question.projection?.phenomenon);
   if (!queue.length) return <div className="panel"><FocusHeading>No hay preguntas disponibles</FocusHeading><a className={secondary} href={subjectHref(subject.id)}>Volver a la materia</a></div>;
   return <div className="mx-auto max-w-4xl">
     <a className={`${secondary} mb-6`} href={subjectHref(subject.id)}>← Volver a la materia</a>
@@ -41,13 +43,14 @@ export function Session({ subject, bank, context }: { subject: Subject; bank: Qu
     {finished ? <section className="panel space-y-6">
       <FocusHeading className="text-4xl">Sesión completada</FocusHeading><p>Revisaste {results.length} preguntas de {subject.name}.</p>
       {objective.length > 0 && <p className="text-xl">Elección de respuestas: <strong>{objective.filter((result) => result.mastered).length} de {objective.length} correctas</strong>.</p>}
+      {structured.length > 0 && <p className="text-xl">Clave de codificación y revisión del fundamento: <strong>{structured.filter((result) => result.mastered).length} de {structured.length} logradas</strong>. Los cuadros comparan códigos; el fundamento escrito se autoevalúa.</p>}
       {written.length > 0 && <p className="text-xl">Autoevaluación: <strong>{written.filter((result) => result.mastered).length} de {written.length} logradas</strong>.</p>}
       <p>{pending.length ? `${pending.length} preguntas para reforzar.` : "Completaste este recorrido. Podés repetirlo o elegir otro tema."}</p>
       {!!pending.length && <ul className="list-disc space-y-2 pl-5">{pending.map((question) => <li key={question.id}>{question.prompt}</li>)}</ul>}
       <div className="flex flex-wrap gap-3">{!!pending.length && <button className={primary} onClick={() => restart(pending)}>Repasar pendientes</button>}<button className={secondary} onClick={() => restart(bank)}>Repetir sesión</button><a className={secondary} href={subjectHref(subject.id)}>Elegir otra práctica</a></div>
     </section> : <>
       <div className="mb-5 flex flex-wrap justify-between gap-2 text-sm text-[#526056]"><span>{subject.name}</span><span>Pregunta {index + 1} de {queue.length}</span></div>
-      <QuestionCard key={`${round}-${index}-${queue[index].id}`} question={queue[index]} last={index === queue.length - 1} onRecord={record} onNext={() => index + 1 === queue.length ? setFinished(true) : setIndex(index + 1)} />
+      {queue[index].projection ? <ProjectionQuestion key={`${round}-${index}-${queue[index].id}`} question={queue[index]} last={index === queue.length - 1} onRecord={record} onNext={() => index + 1 === queue.length ? setFinished(true) : setIndex(index + 1)} /> : <QuestionCard key={`${round}-${index}-${queue[index].id}`} question={queue[index]} last={index === queue.length - 1} onRecord={record} onNext={() => index + 1 === queue.length ? setFinished(true) : setIndex(index + 1)} />}
     </>}
   </div>;
 }

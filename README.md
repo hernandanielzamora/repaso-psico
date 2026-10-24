@@ -2,6 +2,8 @@
 
 Web app de repaso para Psicología, UNC. Experimental conserva las 12 preguntas originales del resumen (9 choice y 3 desarrollos) y agrega 1 pregunta visual: 13 en total. Es un banco inicial, no una cobertura exhaustiva de las 26 páginas del PDF.
 
+**Técnicas Proyectivas** incorpora 74 actividades sin choice: 11 cuadros de determinantes (33 respuestas ficticias), 23 desarrollos, 10 ejercicios de significación de láminas y 30 de fenómenos especiales. Incluye las diez reproducciones históricas con fuente/licencia, visor con giro/zoom/marcado y devoluciones por clave y criterio. Las marcas son didácticas, no localizadores normados. La guía no realiza corrección semántica automática ni diagnóstico. Fuente, búsqueda de modelos académicos y límites: [docs/PROYECTIVAS.md](docs/PROYECTIVAS.md).
+
 Psicología Sanitaria (Sani) incluye 95 actividades basadas en las cinco unidades de `Sani Final PDF.pdf`: choice, verdadero/falso, desarrollo, casos, tarjetas orales y análisis de esquemas. Cada actividad tiene explicación y páginas de referencia. PsicoPato sigue siendo una demo; su imagen geométrica no es una lámina de Rorschach.
 
 ## Preparar Psicobiología Experimental

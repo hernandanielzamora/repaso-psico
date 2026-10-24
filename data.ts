@@ -1,10 +1,12 @@
 import { saniQuestions, saniTopics, saniUnits } from "./content/sani";
 import { psicobioQuestions, psicobioTopics, psicobioUnits } from "./content/psicobio";
 import { atencionQuestions, atencionTopics, atencionUnits } from "./content/atencion";
+import { proyectivasQuestions, proyectivasTopics, proyectivasUnits } from "./content/proyectivas";
+import type { ProjectionExercise } from "./lib/proyectivas-types";
 
 export type Topic = "RMf" | "Estadística" | "tES" | "Integración";
 export type SubjectId = "psicologia-experimental" | (string & {});
-export type QuestionType = "choice" | "development" | "true-false" | "image-analysis" | "case-study" | "flashcard";
+export type QuestionType = "choice" | "development" | "true-false" | "image-analysis" | "case-study" | "flashcard" | "determinant-table" | "plate-significance" | "special-phenomenon";
 
 export type StudyUnit = { id: string; name: string; pages: [number, number] };
 
@@ -36,6 +38,14 @@ export type Subject = {
 };
 
 export const subjects: Subject[] = [
+  {
+    id: "proyectivas", name: "Técnicas Proyectivas", shortName: "Proyectivas",
+    description: "Simulacros escritos: cuadros de determinantes, láminas de Rorschach, fenómenos especiales y desarrollo de las técnicas del resumen.",
+    questionTypes: ["determinant-table", "development", "plate-significance", "special-phenomenon"],
+    topics: proyectivasTopics, units: proyectivasUnits, materialLabel: "Simulacro de Proyectivas",
+    studyNote: "Basado en Resumen Completo Proyectivas (76 páginas), con nomenclatura de Klopfer según el apunte. Casos ficticios para estudiar: la codificación se justifica con el interrogatorio; las asociaciones interpretativas pertenecen al marco del resumen y no constituyen diagnósticos ni hechos clínicos universales. Láminas históricas digitales, con ampliación y marcado de áreas.",
+    accent: "#77503b", soft: "#f0e7df", mark: "P"
+  },
   {
     id: "psicobiologia-tp1", name: "Psicobiología Experimental · TP 1", shortName: "Psicobiología TP 1",
     description: "Atención y vigilancia: sueño, redes atencionales, diseños experimentales y aplicaciones sociales. Cuatro lecturas y una sección integradora.",
@@ -83,7 +93,10 @@ export const questionTypeLabels: Record<QuestionType, string> = {
   "true-false": "Verdadero o falso",
   "image-analysis": "Análisis de imagen",
   "case-study": "Casos de aplicación",
-  flashcard: "Repaso oral con tarjetas"
+  flashcard: "Repaso oral con tarjetas",
+  "determinant-table": "Cuadros de determinantes",
+  "plate-significance": "Significación de láminas",
+  "special-phenomenon": "Fenómenos especiales"
 };
 
 export type Question = {
@@ -102,6 +115,7 @@ export type Question = {
   source: string;
   rubric?: string[];
   media?: MediaAsset;
+  projection?: ProjectionExercise;
 };
 
 const experimentalQuestions: Omit<Question, "subjectId">[] = [
@@ -319,6 +333,7 @@ export const questions: Question[] = [
   ...saniQuestions,
   ...psicobioQuestions,
   ...atencionQuestions,
+  ...proyectivasQuestions,
   ...demoQuestions
 ];
 
