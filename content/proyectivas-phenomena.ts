@@ -35,7 +35,7 @@ const cases: Case[] = [
 ];
 
 export const phenomenonQuestions: Question[] = cases.map(([id, names, prompt, clue, confusion, pages]) => ({
-  id: `proy-fen-${id}`, subjectId: "proyectivas", type: "special-phenomenon", unit: pages[0] < 57 ? "u5" : "u7", topic: "Fenómenos especiales", difficulty: "Aplicación", prompt,
+  id: `proy-fen-${id}`, subjectId: "proyectivas", type: "special-phenomenon", unit: pages[0] < 57 ? "u5" : "u7", topic: "Fenómenos especiales", difficulty: "Aplicación", prompt: `${prompt} Desarrollá tu respuesta: definí el fenómeno, fundamentá con el caso y diferenciá un concepto cercano, aclarando los límites de la inferencia.`,
   sourcePages: pages, source: `Resumen Completo Proyectivas.pdf, pp. ${pages[0]}–${pages[1]} (páginas del archivo).`,
   explanation: `La clave del caso es ${names[0]}. ${clue} ${confusion}`,
   rubric: ["Nombra el fenómeno con la convención del resumen.", "Cita el dato que permite identificarlo.", "Distingue la alternativa cercana y limita las inferencias."],

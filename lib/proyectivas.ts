@@ -1,4 +1,51 @@
-import type { DeterminantRow } from "./proyectivas-types";
+import type { AperceptiveMode, DeterminantRow } from "./proyectivas-types";
+import type { Question } from "../data";
+
+export const aperceptiveGuide: Record<AperceptiveMode, { evidence: string; explanation: string }> = {
+  W: { evidence: "Usa la totalidad de la mancha, sin recortar un sector ni utilizar el blanco como figura.", explanation: "W: global. La localización informada abarca toda la mancha; no se decide por el tamaño de un cuadro en pantalla." },
+  D: { evidence: "Usa solo el sector señalado, fácilmente separable del conjunto por sus propios límites; no integra toda la mancha ni utiliza el blanco.", explanation: "D: detalle usual, definido por segregabilidad y convención de referencia, no por ser pequeño. La clave toma la localización explicitada en el caso." },
+  Dd: { evidence: "Recorta una parte poco segregable del conjunto, sin que el caso precise un subtipo.", explanation: "Dd: detalle inusual. No hay información suficiente para exigir un subtipo más específico." },
+  Dde: { evidence: "Sigue exclusivamente un tramo del borde externo, sin incluir la superficie de la mancha.", explanation: "Dde: detalle inusual externo, sustentado por el uso del borde y no de la superficie." },
+  Ddi: { evidence: "Recorta una pequeña zona dentro de la superficie pigmentada, sin tocar el borde exterior ni usar el blanco.", explanation: "Ddi: detalle inusual interno. El dato decisivo es su ubicación interior y la separación poco usual, no solo su tamaño." },
+  Ddr: { evidence: "Recorta una zona trazando un límite imaginario que no sigue los bordes o divisiones habituales de la mancha.", explanation: "Ddr: detalle inusual raro. El recorte se construye por límites no habituales; no basta con que el contenido resulte extraño." },
+  Ddd: { evidence: "Usa únicamente un pequeño elemento aislado, rodeado en gran parte por blanco y separado del resto de la mancha.", explanation: "Ddd: detalle inusual diminuto, aislado y de carácter independiente. No equivale a todo recorte interior pequeño." },
+  S: { evidence: "Interpreta exclusivamente el espacio blanco señalado; la mancha pigmentada queda como fondo.", explanation: "S: espacio blanco puro. La mancha no integra el percepto y la blancura no es necesariamente un determinante de color acromático." },
+  WS: { evidence: "Parte de toda la mancha y agrega el blanco como complemento de esa figura.", explanation: "WS: global con blanco complementario. El orden señala que la organización parte de la mancha." },
+  SW: { evidence: "Parte de las figuras blancas e integra el conjunto de la mancha como complemento de la escena.", explanation: "SW: el blanco inicia la organización y luego se integra la totalidad pigmentada. No se intercambia automáticamente con WS." },
+  DS: { evidence: "Parte del detalle usual señalado y agrega un espacio blanco como complemento de ese mismo percepto.", explanation: "DS: detalle con blanco complementario. No es S puro porque la mancha también participa." },
+  SD: { evidence: "Parte del espacio blanco y agrega un detalle pigmentado como complemento de la respuesta.", explanation: "SD: blanco como punto de partida con detalle complementario. Se distingue de DS por cómo se organizó la percepción." },
+  Do: { evidence: "Solo interpreta una parte de una figura humana o animal en un área donde el caso establece que habitualmente se integra la figura completa.", explanation: "Do es una denominación histórica para ese tipo de recorte; no es un diagnóstico ni un sinónimo de cualquier detalle pequeño." }
+};
+
+export function gradeAperceptiveMode(row: DeterminantRow, value: string) {
+  const entered = value.trim();
+  const correct = entered === row.mode;
+  let message = correct ? row.modeExplanation : `Tu modo: ${entered || "sin completar"}. Clave: ${row.mode}. ${row.modeExplanation}`;
+  if (!correct && entered === "W") message += " Encerrar la zona en un cuadro no la vuelve global: revisá si se usa toda la mancha, un detalle o el blanco.";
+  if (!correct && (entered === "Dd" || row.mode === "Dd")) message += " En estos casos se pide el subtipo cuando la descripción lo permite; si no se precisa subtipo, no hay que inventarlo.";
+  if (!correct && ["S", "SW", "WS", "SD", "DS"].includes(row.mode)) message += " Revisá si el blanco es exclusivo, punto de partida o complemento, y qué parte pigmentada se integra.";
+  return { correct, entered, message };
+}
+
+export const parcialitoComposition = [
+  { type: "determinant-table", count: 1, label: "Cuadro de modos aperceptivos y determinantes" },
+  { type: "development", count: 3, label: "Preguntas a desarrollar" },
+  { type: "plate-significance", count: 1, label: "Lámina aleatoria" },
+  { type: "special-phenomenon", count: 2, label: "Fenómenos especiales a desarrollar" }
+] as const;
+
+export function generateParcialito(bank: Question[], previousPlate?: number, random: () => number = Math.random): { questions: Question[]; error?: string } {
+  const unique = [...new Map(bank.filter((q) => q.subjectId === "proyectivas").map((q) => [q.id, q])).values()];
+  const result: Question[] = [];
+  for (const section of parcialitoComposition) {
+    let pool = unique.filter((q) => q.type === section.type);
+    if (pool.length < section.count) return { questions: [], error: `Faltan actividades para generar el parcialito: ${section.label.toLowerCase()} (${section.count} necesarias).` };
+    if (section.type === "plate-significance" && pool.some((q) => q.projection?.plate !== previousPlate)) pool = pool.filter((q) => q.projection?.plate !== previousPlate);
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    result.push(...pool.slice(0, section.count));
+  }
+  return { questions: result };
+}
 
 export const determinantGuide: Record<string, string> = {
   F: "Forma: contornos o lineamientos. No se agrega F como código independiente si la forma ya integra otro determinante de la misma percepción.",

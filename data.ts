@@ -39,11 +39,11 @@ export type Subject = {
 
 export const subjects: Subject[] = [
   {
-    id: "proyectivas", name: "Técnicas Proyectivas", shortName: "Proyectivas",
-    description: "Simulacros escritos: cuadros de determinantes, láminas de Rorschach, fenómenos especiales y desarrollo de las técnicas del resumen.",
+    id: "proyectivas", name: "Rorschach", shortName: "Rorschach",
+    description: "Generá parcialitos de siete actividades: un cuadro de modos aperceptivos y determinantes, tres desarrollos, una lámina aleatoria y dos fenómenos especiales a desarrollar.",
     questionTypes: ["determinant-table", "development", "plate-significance", "special-phenomenon"],
-    topics: proyectivasTopics, units: proyectivasUnits, materialLabel: "Simulacro de Proyectivas",
-    studyNote: "Basado en Resumen Completo Proyectivas (76 páginas), con nomenclatura de Klopfer según el apunte. Casos ficticios para estudiar: la codificación se justifica con el interrogatorio; las asociaciones interpretativas pertenecen al marco del resumen y no constituyen diagnósticos ni hechos clínicos universales. Láminas históricas digitales, con ampliación y marcado de áreas.",
+    topics: proyectivasTopics, units: proyectivasUnits, materialLabel: "Práctica de Rorschach",
+    studyNote: "Contenido de Rorschach de Resumen Completo Proyectivas, pp. 40–76, con nomenclatura de Klopfer según el apunte. Casos ficticios: la localización y el interrogatorio fundamentan la codificación. Las asociaciones interpretativas pertenecen al marco del resumen y no constituyen diagnósticos. Incluye láminas con ampliación y marcado de áreas.",
     accent: "#77503b", soft: "#f0e7df", mark: "P"
   },
   {

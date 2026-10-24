@@ -33,8 +33,8 @@ export function Session({ subject, bank, context }: { subject: Subject; bank: Qu
   }
   const pending = results.filter((result) => !result.mastered).map((result) => result.question);
   const objective = results.filter((result) => result.question.options?.length);
-  const structured = results.filter((result) => result.question.projection?.rows || result.question.projection?.phenomenon);
-  const written = results.filter((result) => !result.question.options?.length && !result.question.projection?.rows && !result.question.projection?.phenomenon);
+  const structured = results.filter((result) => result.question.projection?.rows);
+  const written = results.filter((result) => !result.question.options?.length && !result.question.projection?.rows);
   if (!queue.length) return <div className="panel"><FocusHeading>No hay preguntas disponibles</FocusHeading><a className={secondary} href={subjectHref(subject.id)}>Volver a la materia</a></div>;
   return <div className="mx-auto max-w-4xl">
     <a className={`${secondary} mb-6`} href={subjectHref(subject.id)}>← Volver a la materia</a>

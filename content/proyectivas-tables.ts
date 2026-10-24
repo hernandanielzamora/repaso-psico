@@ -1,12 +1,13 @@
 import type { Question } from "../data";
-import type { DeterminantRow, Region } from "../lib/proyectivas-types";
+import type { AperceptiveMode, DeterminantRow, Region } from "../lib/proyectivas-types";
+import { aperceptiveGuide } from "../lib/proyectivas";
 import { plateMedia } from "./proyectivas-plates";
 
 const whole: Region = { x: .1, y: .06, width: .8, height: .88 };
 const center: Region = { x: .37, y: .32, width: .26, height: .35 };
 const left: Region = { x: .1, y: .25, width: .26, height: .5 };
 const right: Region = { x: .64, y: .25, width: .26, height: .5 };
-const row = (response: string, inquiry: string, codes: string[], explanation: string, region = whole): DeterminantRow => ({ response, inquiry, codes, explanation, region });
+const row = (response: string, inquiry: string, codes: string[], explanation: string, region = whole, mode: AperceptiveMode = "W"): DeterminantRow => ({ response, inquiry, codes, explanation, region, mode, localization: aperceptiveGuide[mode].evidence, modeExplanation: aperceptiveGuide[mode].explanation });
 
 const sets: { plate: number; title: string; pages: [number, number]; rows: DeterminantRow[] }[] = [
   { plate: 1, title: "Forma y color acromático", pages: [57, 67], rows: [
@@ -63,14 +64,65 @@ const sets: { plate: number; title: string; pages: [number, number]; rows: Deter
     row("Una araña celeste.", "La forma de araña es precisa; aunque no sea su color natural, fuerzo el celeste para verla de ese color.", ["FC forz"], "Forma definida con relación de color forzada: FC forz según los ejemplos del apunte. La aclaración evita deducirlo solo por una especie o un color.", left),
     row("Un esquema de órganos definidos.", "Uso los colores solamente para delimitar los órganos, que reconozco por su forma. Podría intercambiar los colores sin cambiar lo que veo.", ["FC arb"], "Color arbitrario como delimitador, no como color natural necesario del objeto.", whole),
     row("Una figura vestida de verde que representa la esperanza.", "La figura tiene forma precisa y el verde lo empleo expresamente como símbolo de esperanza, no para delimitar partes.", ["FC simb"], "Forma definida más valor simbólico del color explicitado. No se infiere una simbolización universal del verde sin el interrogatorio.", center)
+  ] },
+  { plate: 3, title: "Detalles usuales y espacio blanco", pages: [53, 63], rows: [
+    row("Una persona levantando algo.", "Uso solo la figura lateral izquierda, bien separable del conjunto; por su postura está levantando un objeto. El color no interviene.", ["M"], "Acción humana sustentada en el interrogatorio: M. El detalle de una figura no es global.", { x: .23, y: .22, width: .22, height: .6 }, "D"),
+    row("Un moño rojo.", "Únicamente la pequeña figura roja del centro, por sus dos lóbulos bien delimitados y su color.", ["FC"], "FC: color cromático subordinado a forma definida. D y FC responden preguntas distintas.", { x: .42, y: .37, width: .16, height: .17 }, "D"),
+    row("Un objeto claro con alas.", "Solo interpreto el hueco blanco entre las figuras. Por su contorno; el blanco como color no me hizo verlo.", ["F"], "S es localización; no obliga a sumar color acromático. El fundamento declarado es solo formal.", { x: .43, y: .53, width: .13, height: .13 }, "S")
+  ] },
+  { plate: 1, title: "Recortes inusuales: interior, borde y límite no habitual", pages: [55, 59], rows: [
+    row("Un ojo.", "Lo recorto en un punto oscuro dentro de la parte derecha; no toca el borde ni el blanco. Solo su forma me hace verlo.", ["F"], "El contraste sirve para ubicar el recorte; no se usa como textura o profundidad.", { x: .66, y: .46, width: .045, height: .045 }, "Ddi"),
+    row("Un perfil.", "Sigo un tramo del contorno exterior izquierdo, sin incluir la superficie. No hay color ni movimiento en mi respuesta.", ["F"], "Respuesta formal en un detalle de borde. El dato de localización es el contorno exclusivamente.", { x: .15, y: .27, width: .13, height: .15 }, "Dde"),
+    row("Una criatura con alas.", "Recorto la porción superior con una línea imaginaria que atraviesa la mancha y excluyo lo inferior, sin seguir una división habitual. Me guío por forma.", ["F"], "Ddr se fundamenta en el límite imaginario no habitual, no en que el nombre de la criatura resulte raro.", { x: .08, y: .06, width: .84, height: .4 }, "Ddr")
+  ] },
+  { plate: 2, title: "Blanco puro: localización y determinante son diferentes", pages: [53, 66], rows: [
+    row("Un trompo.", "Utilizo exclusivamente el hueco blanco central. Es por su contorno, no por su blancura.", ["F"], "El espacio interpretado es S; el rasgo que determina el percepto es la forma, F.", { x: .4, y: .45, width: .2, height: .2 }, "S"),
+    row("Una pequeña nave que asciende.", "La nave ocupa solo el espacio blanco, tiene contorno preciso y se mueve como objeto. El blanco como color no influyó.", ["Fm"], "Movimiento inanimado con forma definida: Fm. No confundir S, localización, con movimiento.", { x: .4, y: .45, width: .2, height: .2 }, "S"),
+    row("Una estatuilla blanca.", "Solo ese espacio blanco. La figura es precisa y su blancura, además de la forma, sí es necesaria para que la vea.", ["FC'"], "Aquí el interrogatorio sí incorpora color acromático a la forma. El modo sigue siendo S.", { x: .4, y: .45, width: .2, height: .2 }, "S")
+  ] },
+  { plate: 8, title: "Diferenciar detalle usual e inusual", pages: [53, 63], rows: [
+    row("Un cuadrúpedo trepando.", "Solo el animal lateral izquierdo; uso su silueta y la postura de trepar, no el color.", ["FM"], "Movimiento animal propio, FM; el área lateral se establece como detalle usual en este caso.", left, "D"),
+    row("Una pequeña forma irregular.", "Recorto una zona poco separable del conjunto central. No se aportan datos suficientes para precisar un subtipo de detalle inusual. Uso solo el contorno.", ["F"], "Se pide Dd general: no hay fundamento para inventar si es interno, externo, raro o diminuto.", { x: .44, y: .32, width: .12, height: .14 }, "Dd"),
+    row("Un animal quieto.", "Únicamente la figura lateral derecha, bien separable. Me baso en su contorno y excluyo color y movimiento.", ["F"], "Contenido animal no implica FM. El interrogatorio describe forma solamente y un detalle usual.", right, "D")
+  ] },
+  { plate: 1, title: "Blanco complementario o punto de partida", pages: [53, 66], rows: [
+    row("Una mariposa con huecos blancos en sus alas.", "Primero organizo toda la mancha como mariposa y luego incorporo los huecos como marcas. Solo los contornos, no el color, sustentan la respuesta.", ["F"], "WS: organización global desde la mancha y blanco complementario. El blanco no se codifica automáticamente como C'.", whole, "WS"),
+    row("Figuras blancas flotando en una escena nocturna.", "Parto de los huecos blancos y después incorporo toda la mancha como escena. Las figuras tienen forma definida; flotan por una fuerza física, sin usar el color.", ["Fm"], "SW: organización desde el blanco con totalidad pigmentada complementaria. La flotación por fuerza física sostiene Fm.", whole, "SW"),
+    row("Un pequeño óvalo.", "Solo una zona dentro de la superficie pigmentada derecha, sin llegar al borde ni usar los blancos. Es por su contorno.", ["F"], "Ddi: recorte interior. No se clasifica S porque el interrogatorio excluye el blanco.", { x: .73, y: .49, width: .06, height: .07 }, "Ddi")
+  ] },
+  { plate: 2, title: "Detalle y blanco en distinto orden", pages: [53, 63], rows: [
+    row("Un animal con la boca abierta.", "Parto de un detalle lateral bien segregable e incorporo un hueco blanco como abertura de su boca. Lo veo solo por los contornos, sin acción ni color.", ["F"], "DS: el detalle inicia la organización; el blanco lo complementa. La boca abierta no basta para atribuir movimiento.", { x: .2, y: .32, width: .29, height: .46 }, "DS"),
+    row("Un cohete que sube y una llama roja debajo.", "Empiezo por el hueco blanco como cohete preciso que asciende y agrego el detalle rojo como llama. La llama la veo solo por el rojo, sin forma.", ["Fm", "C"], "SD: el blanco inicia la escena. El cohete de forma definida aporta Fm y la llama cromática sin forma aporta C.", { x: .32, y: .44, width: .36, height: .4 }, "SD"),
+    row("Una mancha de sangre.", "Tomo únicamente la zona roja inferior, fácilmente segregable. El rojo domina y el contorno es vago.", ["CF"], "D y CF: detalle usual con color predominante y forma secundaria.", { x: .38, y: .64, width: .24, height: .22 }, "D")
+  ] },
+  { plate: 10, title: "Detalles diminutos e independientes", pages: [55, 63], rows: [
+    row("Una pequeña semilla.", "Solo el pequeño punto marrón en lo amarillo inferior izquierdo, bastante aislado. Es por su contorno; el color no intervino.", ["F"], "Ddd por el carácter pequeño e independiente establecido en el caso. F por el contorno.", { x: .39, y: .69, width: .045, height: .06 }, "Ddd"),
+    row("Un objeto diminuto de color marrón.", "Tomo el pequeño elemento aislado del lado inferior derecho. Su forma es precisa y el marrón también determina lo que veo.", ["FC"], "Detalle diminuto más forma-color cromático. Pequeño describe la localización, no la calidad formal.", { x: .56, y: .69, width: .045, height: .06 }, "Ddd"),
+    row("Un pequeño objeto que cae.", "Uso solamente un pequeño elemento separado del resto; le doy forma precisa y lo veo caer por gravedad, sin usar el color.", ["Fm"], "Ddd no impide movimiento: Fm por la caída y la forma definida.", { x: .47, y: .38, width: .06, height: .07 }, "Ddd")
+  ] },
+  { plate: 5, title: "Conservar globales y contrastar recortes", pages: [50, 61], rows: [
+    row("Una mariposa quieta.", "Uso toda la mancha como una sola figura; exclusivamente por sus contornos.", ["F"], "Se conserva el caso global W y el determinante F.", whole, "W"),
+    row("Solo alas de un murciélago.", "Interpreto únicamente las alas y no integro el animal completo; el caso toma la convención histórica de un área donde suele organizarse esa figura completa. Es por su forma.", ["F"], "Do: reducción a una parte de una figura habitualmente integrada, según el ejemplo del resumen. No es un diagnóstico de la persona.", { x: .12, y: .3, width: .76, height: .38 }, "Do"),
+    row("Un perfil en un borde.", "Sigo solo un tramo del límite exterior del ala izquierda, sin usar su superficie ni el resto del animal. Lo veo por forma.", ["F"], "Dde: uso exclusivo del borde; no confundir con toda el ala ni con una global.", { x: .12, y: .33, width: .16, height: .12 }, "Dde")
   ] }
+];
+
+// Explicit editorial localizations for the 33 existing rows, independent of rectangle size.
+const originalModes: AperceptiveMode[][] = [
+  ["W", "W", "Ddi"], ["D", "D", "D"], ["W", "D", "W"], ["W", "W", "W"],
+  ["W", "W", "W"], ["W", "W", "W"], ["W", "W", "W"], ["D", "D", "D"],
+  ["W", "W", "W"], ["W", "W", "W"], ["D", "W", "D"]
 ];
 
 export const determinantQuestions: Question[] = sets.map((set, index) => ({
   id: `proy-cuadro-${index + 1}`, subjectId: "proyectivas", type: "determinant-table", unit: "u6", topic: "Determinantes", difficulty: "Aplicación",
-  prompt: `Cuadro · Lámina ${set.plate}: ${set.title}. Completá hasta tres determinantes por respuesta.`,
-  sourcePages: set.pages, source: `Resumen Completo Proyectivas.pdf, pp. ${set.pages[0]}–${set.pages[1]} (páginas del archivo).`, media: plateMedia(set.plate),
-  explanation: "Las verbalizaciones e interrogatorios son ficticios. Los cuadros marcan áreas aproximadas de referencia, no localizaciones D/Dd normadas. El ejercicio corrige la familia y el predominio de los determinantes explicitados; no evalúa calidad formal ni realiza diagnóstico. El orden entre códigos independientes no se penaliza. No se duplican F y un compuesto que ya incorpora forma.",
+  prompt: `Cuadro · Lámina ${set.plate}: ${set.title}. Completá el modo aperceptivo y hasta tres determinantes por respuesta.`,
+  sourcePages: [50, set.pages[1]], source: `Resumen Completo Proyectivas.pdf, pp. 50–${set.pages[1]} (páginas del archivo).`, media: plateMedia(set.plate),
+  explanation: "Las verbalizaciones e interrogatorios son ficticios. Los cuadros marcan áreas aproximadas; la localización se establece explícitamente en cada caso con las definiciones del apunte. La clave del modo se basa en esa descripción, no en una norma D/Dd deducida del rectángulo. Se corrigen por separado modo aperceptivo y determinantes; no se evalúa calidad formal ni se realiza diagnóstico. El orden entre códigos independientes no se penaliza.",
   rubric: ["Justifica cada código con el interrogatorio.", "Respeta mayúsculas, orden dentro del código y apóstrofos.", "Deja vacías las columnas que no corresponden."],
-  projection: { plate: set.plate, rows: set.rows, criteria: [] }
+  projection: { plate: set.plate, rows: set.rows.map((r, i) => {
+    const mode = originalModes[index]?.[i] ?? r.mode;
+    return { ...r, mode, localization: aperceptiveGuide[mode].evidence, modeExplanation: aperceptiveGuide[mode].explanation,
+      ...(index === 0 && i === 2 ? { region: { x: .65, y: .45, width: .08, height: .08 } } : {}) };
+  }), criteria: [] }
 }));

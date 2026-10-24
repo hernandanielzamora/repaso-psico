@@ -4,8 +4,8 @@ import { createHash } from "node:crypto";
 import { proyectivasQuestions } from "../content/proyectivas";
 import { plateSources } from "../content/proyectivas-plates";
 import { subjects } from "../data";
-import { avoidRepeatedPlate, balanceQuestionTypes, gradeDeterminants, matchesPhenomenon } from "../lib/proyectivas";
-import { selectQuestions, buildSession, storageKey } from "../lib/study";
+import { avoidRepeatedPlate, balanceQuestionTypes, generateParcialito, gradeAperceptiveMode, gradeDeterminants } from "../lib/proyectivas";
+import { selectQuestions, buildSession, parseProgress, storageKey } from "../lib/study";
 
 const subjectId = "proyectivas";
 async function open(page: Page, mode: string) {
@@ -19,9 +19,9 @@ async function reviewAll(page: Page, count: number) {
 }
 
 test("Proyectivas has four written modes, traceable keys and intact images", () => {
-  expect(proyectivasQuestions).toHaveLength(74);
-  expect(selectQuestions(subjectId, "determinant-table")).toHaveLength(11);
-  expect(selectQuestions(subjectId, "development")).toHaveLength(23);
+  expect(proyectivasQuestions).toHaveLength(69);
+  expect(selectQuestions(subjectId, "determinant-table")).toHaveLength(19);
+  expect(selectQuestions(subjectId, "development")).toHaveLength(10);
   expect(selectQuestions(subjectId, "special-phenomenon")).toHaveLength(30);
   expect(selectQuestions(subjectId, "plate-significance")).toHaveLength(10);
   expect(subjects.find((s) => s.id === subjectId)!.questionTypes).not.toContain("choice");
@@ -33,12 +33,14 @@ test("Proyectivas has four written modes, traceable keys and intact images", () 
   for (const q of proyectivasQuestions) {
     expect(q.options).toBeUndefined();
     expect(q.projection).toBeTruthy();
-    expect(q.sourcePages![0]).toBeGreaterThanOrEqual(1);
+    expect(q.sourcePages![0]).toBeGreaterThanOrEqual(40);
     expect(q.sourcePages![1]).toBeLessThanOrEqual(76);
     expect(q.sourcePages![0]).toBeLessThanOrEqual(q.sourcePages![1]);
     expect(q.source).toContain("Resumen Completo Proyectivas.pdf");
     for (const row of q.projection!.rows ?? []) {
       expect(row.codes.length).toBeLessThanOrEqual(3);
+      expect(gradeAperceptiveMode(row, row.mode).correct).toBe(true);
+      expect(row.localization).toBeTruthy();
       expect(row.region.x + row.region.width).toBeLessThanOrEqual(1);
       expect(row.region.y + row.region.height).toBeLessThanOrEqual(1);
     }
@@ -63,12 +65,42 @@ test("determinant correction preserves case, order within codes and multiplicity
   const achromatic = selectQuestions(subjectId, "determinant-table")[0].projection!.rows![1];
   expect(gradeDeterminants(achromatic, ["FC’", "", ""]).correct).toBe(true);
   expect(gradeDeterminants(achromatic, ["F", "C'"]).correct).toBe(false);
-  expect(matchesPhenomenon("inversion figura-fondo", ["Inversión figura-fondo"])).toBe(true);
-  expect(matchesPhenomenon("no es MOR", ["MOR"])).toBe(false);
   const bank = selectQuestions(subjectId, "plate-significance");
   const result = avoidRepeatedPlate(bank, bank[0].projection!.plate);
   expect(result[0].id).not.toBe(bank[0].id);
   expect(bank[0].id).toBe("proy-lamina-1");
+});
+
+test("all original Rorschach tables remain and new localizations cover detail, unusual detail and white space", () => {
+  const tables = selectQuestions(subjectId, "determinant-table");
+  for (let i = 1; i <= 11; i++) expect(tables.some((q) => q.id === `proy-cuadro-${i}`)).toBe(true);
+  const newRows = tables.slice(11).flatMap((q) => q.projection!.rows!);
+  for (const mode of ["W", "D", "Dd", "Dde", "Ddi", "Ddr", "Ddd", "S", "WS", "SW", "DS", "SD"]) expect(newRows.some((row) => row.mode === mode)).toBe(true);
+  const white = newRows.find((row) => row.mode === "S")!;
+  expect(gradeAperceptiveMode(white, "W").message).toContain("blanco");
+  const inside = newRows.find((row) => row.mode === "Ddi")!;
+  expect(gradeAperceptiveMode(inside, "Dd").correct).toBe(false);
+  const old = { mastered: true, attempts: 1, date: "2026-10-24T12:00:00Z" };
+  expect(parseProgress(JSON.stringify({ "proy-des-tro-series": old, "proy-des-administracion": old, salmon: old }))).toEqual({ "proy-des-administracion": old, salmon: old });
+});
+
+test("parcialitos contain exactly 1+3+1+2 unique Rorschach activities and fail atomically if incomplete", () => {
+  const before = proyectivasQuestions.map((q) => q.id);
+  let lastPlate: number | undefined;
+  for (let i = 0; i < 50; i++) {
+    const result = generateParcialito(proyectivasQuestions, lastPlate);
+    expect(result.error).toBeUndefined();
+    expect(result.questions.map((q) => q.type)).toEqual(["determinant-table", "development", "development", "development", "plate-significance", "special-phenomenon", "special-phenomenon"]);
+    expect(new Set(result.questions.map((q) => q.id)).size).toBe(7);
+    const plate = result.questions[4].projection!.plate;
+    expect(plate).not.toBe(lastPlate);
+    lastPlate = plate;
+  }
+  expect(proyectivasQuestions.map((q) => q.id)).toEqual(before);
+  const short = generateParcialito(proyectivasQuestions.filter((q) => q.type !== "development"));
+  expect(short.questions).toEqual([]);
+  expect(short.error).toContain("Faltan actividades");
+  expect(generateParcialito([...proyectivasQuestions, ...proyectivasQuestions]).questions).toHaveLength(7);
 });
 
 test("table corrections explain specific errors and preserve pending progress", async ({ page }) => {
@@ -78,8 +110,11 @@ test("table corrections explain specific errors and preserve pending progress", 
   await page.getByLabel("Respuesta 1, determinante 1", { exact: true }).fill("F");
   await page.getByLabel("Respuesta 2, determinante 1", { exact: true }).fill("FC");
   await page.getByLabel("Respuesta 3, determinante 1", { exact: true }).fill("C'F");
+  await expect(page.getByRole("button", { name: "Corregir cuadro" })).toBeDisabled();
+  for (const [i, row] of selectQuestions(subjectId, "determinant-table")[0].projection!.rows!.entries()) await page.getByLabel(`Respuesta ${i + 1}, modo aperceptivo`, { exact: true }).fill(row.mode);
   await page.getByRole("button", { name: "Corregir cuadro" }).click();
-  await expect(page.getByText("Codificación: 2 de 3 filas correctas.")).toBeVisible();
+  await expect(page.getByText("Codificación: 2 de 3 filas correctas en determinantes.")).toBeVisible();
+  await expect(page.getByText("Modos aperceptivos: 3 de 3 correctos.")).toBeVisible();
   await expect(page.getByText(/Falta fundamentar: FC'/)).toBeVisible();
   await page.getByRole("button", { name: "Guardar revisión" }).click();
   await expect(page.getByText("Actividad guardada como pendiente de repaso.")).toBeVisible();
@@ -93,6 +128,7 @@ test("table corrections explain specific errors and preserve pending progress", 
   await expect(page.getByText("Pregunta 1 de 1", { exact: true })).toBeVisible();
   const rows = selectQuestions(subjectId, "determinant-table")[0].projection!.rows!;
   for (const [i, row] of rows.entries()) for (const [j, code] of row.codes.entries()) await page.getByLabel(`Respuesta ${i + 1}, determinante ${j + 1}`, { exact: true }).fill(code);
+  for (const [i, row] of rows.entries()) await page.getByLabel(`Respuesta ${i + 1}, modo aperceptivo`, { exact: true }).fill(row.mode);
   await page.getByRole("button", { name: "Corregir cuadro" }).click();
   await page.getByRole("button", { name: "Guardar revisión" }).click();
   await page.getByRole("button", { name: "Ver resultados" }).click();
@@ -145,16 +181,18 @@ test("written review requires each criterion and gives a personal reinforcement 
   await expect(page.getByText("Actividad guardada como pendiente de repaso.")).toBeVisible();
 });
 
-test("phenomena use free naming and evidence rather than choices", async ({ page }) => {
+test("phenomena are developed in prose and require review of definition, evidence and contrast", async ({ page }) => {
   await open(page, "special-phenomenon");
   const first = buildSession(selectQuestions(subjectId, "special-phenomenon"), 10, false)[0];
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(first.prompt);
-  await page.getByLabel("Nombre del fenómeno", { exact: true }).fill("MOR");
-  await page.getByLabel("Fundamento, diferencia con otro fenómeno y límites").fill("El ejemplo utiliza el blanco como figura, sin integrar mancha y blanco.");
+  await expect(page.getByRole("textbox")).toHaveCount(1);
+  await page.getByLabel("Tu desarrollo sobre fenómenos especiales").fill("La inversión figura-fondo utiliza el blanco como figura. Se diferencia de fusión porque no integra mancha y blanco; no infiero un diagnóstico.");
   await page.getByRole("button", { name: "Revisar con la guía" }).click();
-  await expect(page.getByRole("heading", { name: "Nombre escrito: no coincide con la clave" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Concepto y fundamento para comparar tu desarrollo" })).toBeVisible();
   await expect(page.getByText(`Dato decisivo: ${first.projection!.phenomenon!.clue}`, { exact: true })).toBeVisible();
   await reviewAll(page, 2);
+  await expect(page.getByRole("button", { name: "Guardar revisión" })).toBeDisabled();
+  await page.getByRole("button", { name: "Me faltó o lo confundí · criterio 3", exact: true }).click();
   await page.getByRole("button", { name: "Guardar revisión" }).click();
   await expect(page.getByText("Actividad guardada como pendiente de repaso.")).toBeVisible();
 });
@@ -182,4 +220,64 @@ test("Proyectivas keeps its table scroll contained at 320px and handles image fa
   await expect(page.getByRole("alert").filter({ hasText: "No se pudo cargar la lámina" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await expect(page.getByRole("button", { name: "Ampliar lámina" })).toBeDisabled();
+});
+
+test("a wrong aperceptive mode cannot be overridden by correct determinants", async ({ page }) => {
+  await open(page, "determinant-table");
+  const rows = selectQuestions(subjectId, "determinant-table")[0].projection!.rows!;
+  await expect(page.getByRole("columnheader", { name: "Modos Aperceptivos", exact: true })).toBeVisible();
+  for (const [i, row] of rows.entries()) {
+    await page.getByLabel(`Respuesta ${i + 1}, modo aperceptivo`, { exact: true }).fill("S");
+    for (const [j, code] of row.codes.entries()) await page.getByLabel(`Respuesta ${i + 1}, determinante ${j + 1}`, { exact: true }).fill(code);
+  }
+  await page.getByRole("button", { name: "Corregir cuadro" }).click();
+  await expect(page.getByText("Codificación: 3 de 3 filas correctas en determinantes.")).toBeVisible();
+  await expect(page.getByText("Modos aperceptivos: 0 de 3 correctos.")).toBeVisible();
+  await page.getByRole("button", { name: "Guardar revisión" }).click();
+  await expect(page.getByText("Actividad guardada como pendiente de repaso.")).toBeVisible();
+});
+
+test("a generated parcialito completes all seven sections and the next generation changes its plate", async ({ page }) => {
+  await page.goto(`/#subject/${subjectId}`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Rorschach");
+  await expect(page.getByLabel("Tema", { exact: true }).locator("option")).not.toContainText(["TRO", "Desiderativo", "Técnicas gráficas"]);
+  // Free-practice filters cannot shorten the fixed seven-activity exam.
+  await page.getByLabel("Forma de practicar").selectOption("development");
+  await page.getByLabel("Solo pendientes de repaso").check();
+  await page.getByRole("button", { name: "Generar parcialito" }).click();
+  await expect(page.getByText("Parcialito de Rorschach · 7 actividades", { exact: true })).toBeVisible();
+  const types = ["determinant-table", "development", "development", "development", "plate-significance", "special-phenomenon", "special-phenomenon"];
+  const ids: string[] = [];
+  let firstPlate: number | undefined;
+  for (let i = 0; i < 7; i++) {
+    await expect(page.getByText(`Pregunta ${i + 1} de 7`, { exact: true })).toBeVisible();
+    const prompt = await page.getByRole("heading", { level: 1 }).textContent();
+    const q = proyectivasQuestions.find((question) => question.prompt === prompt)!;
+    expect(q.type).toBe(types[i]); ids.push(q.id);
+    if (q.type === "plate-significance") firstPlate = q.projection!.plate;
+    if (q.projection!.rows) {
+      for (const [r, row] of q.projection!.rows.entries()) {
+        await page.getByLabel(`Respuesta ${r + 1}, modo aperceptivo`, { exact: true }).fill(row.mode);
+        for (const [c, code] of row.codes.entries()) await page.getByLabel(`Respuesta ${r + 1}, determinante ${c + 1}`, { exact: true }).fill(code);
+      }
+      await page.getByRole("button", { name: "Corregir cuadro" }).click();
+    } else {
+      const fields = page.getByRole("textbox");
+      for (let f = 0; f < await fields.count(); f++) await fields.nth(f).fill("Desarrollo el concepto, fundamento el caso con el resumen y diferencio las categorías y límites de interpretación.");
+      await page.getByRole("button", { name: "Revisar con la guía" }).click();
+      const count = await page.getByRole("button", { name: /^Lo incluí/ }).count();
+      await reviewAll(page, count);
+    }
+    await page.getByRole("button", { name: "Guardar revisión" }).click();
+    await page.getByRole("button", { name: i === 6 ? "Ver resultados" : "Siguiente pregunta" }).click();
+  }
+  expect(new Set(ids).size).toBe(7);
+  await expect(page.getByText("Revisaste 7 preguntas de Rorschach.", { exact: true })).toBeVisible();
+  const stored = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!), storageKey);
+  for (const id of ids) expect(stored[id].mastered).toBe(true);
+  await page.getByRole("link", { name: "Elegir otra práctica" }).click();
+  await page.getByRole("button", { name: "Generar parcialito" }).click();
+  const rememberedPlate = await page.evaluate(() => Number(sessionStorage.getItem("nucleo-proy-first-plate")));
+  expect(rememberedPlate).not.toBe(firstPlate);
+  await expect(page.getByText("Pregunta 1 de 7", { exact: true })).toBeVisible();
 });

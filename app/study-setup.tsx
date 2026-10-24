@@ -4,9 +4,16 @@ import { useState } from "react";
 import { questionTypeLabels, type Question, type Subject } from "@/data";
 import { buildSession, selectQuestions, type Mode, type Progress, type StudyScope } from "@/lib/study";
 import { setExamUnits, useExamPreferences, type Exam } from "@/lib/exam-store";
-import { avoidRepeatedPlate, balanceQuestionTypes } from "@/lib/proyectivas";
+import { avoidRepeatedPlate, balanceQuestionTypes, generateParcialito, parcialitoComposition } from "@/lib/proyectivas";
 
 let lastProjectionPlate: number | undefined;
+function previousProjectionPlate() {
+  try { return Number(sessionStorage.getItem("nucleo-proy-first-plate")) || lastProjectionPlate; } catch { return lastProjectionPlate; }
+}
+function rememberProjectionPlate(plate: number | undefined) {
+  lastProjectionPlate = plate;
+  try { if (plate) sessionStorage.setItem("nucleo-proy-first-plate", String(plate)); } catch {}
+}
 
 export const examLabels: Record<Exam, string> = { first: "Primer parcial", second: "Segundo parcial", final: "Final" };
 
@@ -17,6 +24,7 @@ export function StudySetup({ subject, progress, onStart }: { subject: Subject; p
   const [limit, setLimit] = useState(subject.units ? "10" : "all");
   const [randomize, setRandomize] = useState(!!subject.units);
   const [onlyPending, setOnlyPending] = useState(false);
+  const [parcialitoError, setParcialitoError] = useState("");
   const { preferences, warning } = useExamPreferences();
   const unitIds = subject.materialExam || exam === "final" ? subject.units?.map((unit) => unit.id) : preferences[subject.id]?.[exam] ?? [];
   const scope: StudyScope = subject.units ? { unitIds, includeFinalOnly: exam === "final" } : {};
@@ -24,6 +32,16 @@ export function StudySetup({ subject, progress, onStart }: { subject: Subject; p
   const selected = onlyPending ? pool.filter((question) => progress[question.id]?.mastered === false) : pool;
   const count = limit === "all" ? selected.length : Math.min(Number(limit), selected.length);
   const context = subject.materialLabel ?? (subject.units ? `${examLabels[exam]} · ${unitIds?.map((id) => `U${id.slice(1)}`).join(", ") || "sin unidades seleccionadas"}` : undefined);
+  const parcialitoBank = subject.id === "proyectivas" ? selectQuestions(subject.id) : [];
+  const canGenerate = parcialitoComposition.every((section) => parcialitoBank.filter((q) => q.type === section.type).length >= section.count);
+
+  function startParcialito() {
+    const result = generateParcialito(parcialitoBank, previousProjectionPlate());
+    if (result.error) { setParcialitoError(result.error); return; }
+    rememberProjectionPlate(result.questions.find((q) => q.type === "plate-significance")?.projection?.plate);
+    setParcialitoError("");
+    onStart(result.questions, "Parcialito de Rorschach · 7 actividades");
+  }
 
   function changeExam(value: Exam) { setExam(value); setTopic("all"); }
   function toggleUnit(id: string, checked: boolean) {
@@ -35,20 +53,28 @@ export function StudySetup({ subject, progress, onStart }: { subject: Subject; p
     const count = limit === "all" ? bank.length : Number(limit);
     let prepared = subject.id === "proyectivas" ? balanceQuestionTypes(buildSession(bank, bank.length, randomize), count) : buildSession(bank, count, randomize);
     if (subject.id === "proyectivas" && bank.length && bank.every((q) => q.type === "plate-significance")) {
-      let previous = lastProjectionPlate;
-      try { previous = Number(sessionStorage.getItem("nucleo-proy-first-plate")) || previous; } catch {}
-      prepared = avoidRepeatedPlate(prepared, previous);
-      lastProjectionPlate = prepared[0]?.projection?.plate;
-      try { sessionStorage.setItem("nucleo-proy-first-plate", String(lastProjectionPlate)); } catch {}
+      prepared = avoidRepeatedPlate(prepared, previousProjectionPlate());
+      rememberProjectionPlate(prepared[0]?.projection?.plate);
     }
     if (prepared.length) onStart(prepared, label);
   }
 
   return <>
+    {subject.id === "proyectivas" && <section className="panel space-y-5" aria-labelledby="parcialito">
+      <p className="eyebrow">Rorschach · Simulacro escrito</p>
+      <h2 id="parcialito" className="text-3xl">Generá un parcialito</h2>
+      <p>Cada parcialito contiene siete actividades, en este orden:</p>
+      <ul className="list-disc space-y-2 pl-5">{parcialitoComposition.map((section) => <li key={section.type}><strong>{section.count}</strong> {section.label.toLowerCase()}</li>)}</ul>
+      <p className="text-[#526056]">Se sortean preguntas distintas dentro del parcialito. La lámina varía entre generaciones. Los fenómenos especiales se responden a desarrollar, con guía y revisión por criterios.</p>
+      {!canGenerate && <p role="status">No hay suficientes actividades de cada modalidad para generar un parcialito completo.</p>}
+      {parcialitoError && <p role="alert">{parcialitoError}</p>}
+      <button className="button button-primary" disabled={!canGenerate} onClick={startParcialito}>Generar parcialito →</button>
+      <p className="text-sm text-[#526056]">Usa todo el banco de Rorschach. Los filtros de práctica libre de abajo no modifican esta estructura. Es una práctica de estudio, no un modelo oficial de examen.</p>
+    </section>}
     <section className="panel" aria-labelledby="preparar">
-      <h2 id="preparar" className="text-3xl">Prepará tu sesión</h2>
+      <h2 id="preparar" className="text-3xl">{subject.id === "proyectivas" ? "Práctica libre de Rorschach" : "Prepará tu sesión"}</h2>
       {subject.units && <div className="mt-6 space-y-5">
-        {subject.materialLabel ? <p className="text-[#526056]"><strong>{subject.materialLabel}</strong> · Practicá las lecturas o la integración desde los accesos de abajo, o combiná todo en una sesión.</p> : subject.materialExam ? <p className="text-[#526056]"><strong>{examLabels[subject.materialExam]}</strong> · Unidades {subject.units.map((unit) => unit.id.slice(1)).join(", ")}. Podés acotar la práctica por tema, unidad o modalidad.</p> : <label htmlFor="exam" className="block font-bold">Estoy preparando<select id="exam" value={exam} onChange={(event) => changeExam(event.target.value as Exam)}>{Object.entries(examLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>}
+        {subject.materialLabel ? <p className="text-[#526056]"><strong>{subject.materialLabel}</strong> · {subject.id === "proyectivas" ? "Elegí una modalidad o tema para practicar por separado, o usá los accesos por bloque." : "Practicá las lecturas o la integración desde los accesos de abajo, o combiná todo en una sesión."}</p> : subject.materialExam ? <p className="text-[#526056]"><strong>{examLabels[subject.materialExam]}</strong> · Unidades {subject.units.map((unit) => unit.id.slice(1)).join(", ")}. Podés acotar la práctica por tema, unidad o modalidad.</p> : <label htmlFor="exam" className="block font-bold">Estoy preparando<select id="exam" value={exam} onChange={(event) => changeExam(event.target.value as Exam)}>{Object.entries(examLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>}
         {subject.materialLabel || subject.materialExam ? null : exam === "final" ? <p className="text-[#526056]">El final incluye las {subject.units.length} unidades disponibles y consignas integradoras. Podés acotar la práctica por tema o modalidad.</p> : <fieldset className="rounded-2xl border border-[#d8d4ca] p-4">
           <legend className="px-2 font-bold">Unidades de tu {exam === "first" ? "primer" : "segundo"} parcial</legend>
           <p className="mb-3 text-sm text-[#526056]">El PDF no indica el corte de los parciales. Marcá las unidades que entran según tu cátedra. Esta selección es personal y se guarda en este navegador.</p>
