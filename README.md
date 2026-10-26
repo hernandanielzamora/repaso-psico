@@ -31,7 +31,7 @@ Mapa de fuentes, criterios editoriales y cobertura: [docs/SANI.md](docs/SANI.md)
 - Navegación con fragmentos de URL compatible con el botón Atrás y hosting estático.
 - Interfaz adaptable a celular y computadora, con controles de teclado.
 
-El progreso mide preguntas revisadas; no garantiza dominio. No hay cuentas ni sincronización entre dispositivos. Las revisiones completadas se guardan; la sesión y el texto escrito se reinician al salir o recargar. Los desarrollos no tienen corrección automática.
+El progreso mide preguntas revisadas; no garantiza dominio. Se guarda localmente y puede sincronizarse con otros dispositivos mediante un perfil anónimo de Supabase y un QR temporal. No requiere correo ni contraseña. La sincronización es optativa y debe configurarse según [docs/SYNC.md](docs/SYNC.md), ejecutando [supabase/sync.sql](supabase/sync.sql). Los textos en curso, la sesión y las marcas se reinician al salir o recargar; solo se comparten revisiones completadas. Los desarrollos no tienen corrección automática.
 
 ## Desarrollo
 
@@ -49,6 +49,7 @@ Abrir http://localhost:3000. En PowerShell con scripts deshabilitados, usar `npm
 ```bash
 npm run lint
 npm run test:e2e
+npm run test:sync-db
 npm start
 ```
 

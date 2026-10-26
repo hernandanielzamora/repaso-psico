@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { parseProgress, storageKey, type Progress } from "./study";
+import { enqueueReview } from "./sync-data";
 
 type Snapshot = { progress: Progress; warning: string };
 const empty: Snapshot = { progress: {}, warning: "" };
@@ -38,12 +39,23 @@ export function recordReview(id: string, mastered: boolean) {
   getSnapshot();
   try { snapshot = { ...snapshot, progress: { ...snapshot.progress, ...parseProgress(window.localStorage.getItem(storageKey)) } }; }
   catch { /* Keep in-memory progress if storage is unavailable. */ }
+  const date = new Date(Math.max(Date.now(), (Date.parse(snapshot.progress[id]?.date ?? "") || 0) + 1)).toISOString();
+  enqueueReview(id, mastered, date);
   const progress = { ...snapshot.progress, [id]: {
-    mastered, attempts: (snapshot.progress[id]?.attempts ?? 0) + 1, date: new Date().toISOString()
+    mastered, attempts: (snapshot.progress[id]?.attempts ?? 0) + 1, date
   } };
   snapshot = { progress, warning: "" };
   try { window.localStorage.setItem(storageKey, JSON.stringify(progress)); }
   catch { snapshot.warning = "No se pudo guardar el progreso en este navegador. Se conserva durante esta visita."; }
+  listeners.forEach((listener) => listener());
+}
+
+export function currentProgress() { return getSnapshot().progress; }
+export function replaceCloudProgress(progress: Progress) {
+  getSnapshot();
+  snapshot = { progress: parseProgress(JSON.stringify(progress)), warning: "" };
+  try { localStorage.setItem(storageKey, JSON.stringify(snapshot.progress)); }
+  catch { snapshot.warning = "El progreso combinado se conserva durante esta visita, pero el navegador no permite guardarlo localmente."; }
   listeners.forEach((listener) => listener());
 }
 

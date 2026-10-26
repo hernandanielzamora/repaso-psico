@@ -25,7 +25,7 @@
 
 # misc
 # Material de estudio privado (no publicar en GitHub)
-/Resumen Expe Express 2026 Parcial 2 Full.pdf
+*.[pP][dD][fF]
 .DS_Store
 *.pem
 
@@ -37,6 +37,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel

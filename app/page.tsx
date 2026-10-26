@@ -6,6 +6,7 @@ import { selectQuestions, subjectProgress, type Progress } from "@/lib/study";
 import { useProgress } from "@/lib/progress-store";
 import { FocusHeading, Session } from "./study-session";
 import { StudySetup } from "./study-setup";
+import { SyncPanel } from "./sync-panel";
 
 const secondary = "button button-secondary";
 const subjectHref = (id: string) => `#subject/${encodeURIComponent(id)}`;
@@ -36,11 +37,12 @@ export default function Home() {
         </a>
         <a href="#library" className={secondary}>Todas las materias</a>
       </header>
+      <SyncPanel />
       {warning && <p role="status" className="mb-6 rounded-xl bg-[#fff0d7] p-4">{warning}</p>}
       {!subject ? <Library progress={progress} /> : screen === "session"
         ? <Session key={subject.id} subject={subject} bank={sessionPlan?.subjectId === subject.id ? sessionPlan.questions : selectQuestions(subject.id)} context={sessionPlan?.subjectId === subject.id ? sessionPlan.context : undefined} />
         : <SubjectHome key={subject.id} subject={subject} progress={progress} onStart={start} />}
-      <footer className="mt-12 border-t border-[#d8d4ca] py-5 text-sm text-[#526056]">Tu progreso se guarda en este navegador. No se sincroniza entre dispositivos.</footer>
+      <footer className="mt-12 border-t border-[#d8d4ca] py-5 text-sm text-[#526056]">Tu progreso se guarda en este navegador. Activá «Sincronizar dispositivos» para compartir las revisiones con tus otros equipos.</footer>
     </div>
   </main>;
 }

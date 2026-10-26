@@ -8,17 +8,22 @@
     "start": "node scripts/serve.mjs",
     "lint": "eslint",
     "test": "playwright test",
-    "test:e2e": "npm run build && playwright test"
+    "test:e2e": "npm run build && playwright test",
+    "test:sync-db": "node scripts/test-sync-db.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.118.0",
     "next": "16.4.3",
+    "qrcode": "1.5.4",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.12",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
+    "@types/qrcode": "1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
