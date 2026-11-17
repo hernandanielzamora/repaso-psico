@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { questionTypeLabels, type Question, type Subject } from "@/data";
 import { recordReview } from "@/lib/progress-store";
 import { ProjectionQuestion } from "./projection-question";
+import { WrittenReview } from "./written-review";
+import { writtenOutcome } from "@/lib/antro";
 
 const primary = "button button-primary";
 const secondary = "button button-secondary";
@@ -102,9 +104,9 @@ function QuestionCard({ question, last, onRecord, onNext }: { question: Question
         : <div ref={feedback} tabIndex={-1} className="space-y-4 rounded-2xl bg-[#eaf0e6] p-5">
           <h2 className="text-2xl">{hasOptions ? correct ? "¡Correcto!" : "Respuesta incorrecta" : "Guía de autoevaluación"}</h2>
           <p className="leading-7">{question.explanation}</p>
-          {question.rubric && <div><h3 className="mb-2 font-bold">Criterios para revisar tu respuesta</h3><ul className="list-disc space-y-2 pl-5">{question.rubric.map((criterion) => <li key={criterion}>{criterion}</li>)}</ul></div>}
+          {question.rubric && !question.writtenCriteria && <div><h3 className="mb-2 font-bold">Criterios para revisar tu respuesta</h3><ul className="list-disc space-y-2 pl-5">{question.rubric.map((criterion) => <li key={criterion}>{criterion}</li>)}</ul></div>}
           <p className="text-sm text-[#526056]">Fuente: {question.source}</p>
-          {!hasOptions && <div><p className="mb-3 font-bold">¿Cómo te fue al comparar con la guía?</p><div className="flex flex-wrap gap-3"><button disabled={assessment !== null} aria-pressed={assessment === true} className={secondary} onClick={() => assess(true)}>Lo pude explicar</button><button disabled={assessment !== null} aria-pressed={assessment === false} className={secondary} onClick={() => assess(false)}>Necesito repasar</button></div>{assessment !== null && <p role="status" className="mt-3">Autoevaluación registrada: {assessment ? "lograda" : "para repasar"}.</p>}</div>}
+          {question.writtenCriteria ? <WrittenReview question={question} onComplete={(ratings) => assess(writtenOutcome(ratings))} /> : !hasOptions && <div><p className="mb-3 font-bold">¿Cómo te fue al comparar con la guía?</p><div className="flex flex-wrap gap-3"><button disabled={assessment !== null} aria-pressed={assessment === true} className={secondary} onClick={() => assess(true)}>Lo pude explicar</button><button disabled={assessment !== null} aria-pressed={assessment === false} className={secondary} onClick={() => assess(false)}>Necesito repasar</button></div>{assessment !== null && <p role="status" className="mt-3">Autoevaluación registrada: {assessment ? "lograda" : "para repasar"}.</p>}</div>}
           <button className={primary} disabled={!hasOptions && assessment === null} onClick={onNext}>{last ? "Ver resultados" : "Siguiente pregunta →"}</button>
         </div>}
     </div>

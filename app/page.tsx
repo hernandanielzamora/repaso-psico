@@ -7,6 +7,7 @@ import { useProgress } from "@/lib/progress-store";
 import { FocusHeading, Session } from "./study-session";
 import { StudySetup } from "./study-setup";
 import { SyncPanel } from "./sync-panel";
+import { AntroFinal } from "./antro-final";
 
 const secondary = "button button-secondary";
 const subjectHref = (id: string) => `#subject/${encodeURIComponent(id)}`;
@@ -39,8 +40,10 @@ export default function Home() {
       </header>
       <SyncPanel />
       {warning && <p role="status" className="mb-6 rounded-xl bg-[#fff0d7] p-4">{warning}</p>}
-      {!subject ? <Library progress={progress} /> : screen === "session"
-        ? <Session key={subject.id} subject={subject} bank={sessionPlan?.subjectId === subject.id ? sessionPlan.questions : selectQuestions(subject.id)} context={sessionPlan?.subjectId === subject.id ? sessionPlan.context : undefined} />
+      {!subject ? <Library progress={progress} /> : screen === "session" && !(subject.id === "antro" && sessionPlan?.subjectId !== "antro")
+        ? subject.id === "antro" && sessionPlan?.context === "Simulacro integrador de Antropología · 6 consignas"
+          ? <AntroFinal key={sessionPlan.questions.map((question) => question.id).join("-")} bank={sessionPlan.questions} />
+          : <Session key={subject.id} subject={subject} bank={sessionPlan?.subjectId === subject.id ? sessionPlan.questions : selectQuestions(subject.id)} context={sessionPlan?.subjectId === subject.id ? sessionPlan.context : undefined} />
         : <SubjectHome key={subject.id} subject={subject} progress={progress} onStart={start} />}
       <footer className="mt-12 border-t border-[#d8d4ca] py-5 text-sm text-[#526056]">Tu progreso se guarda en este navegador. Activá «Sincronizar dispositivos» para compartir las revisiones con tus otros equipos.</footer>
     </div>

@@ -3,6 +3,7 @@ import { psicobioQuestions, psicobioTopics, psicobioUnits } from "./content/psic
 import { atencionQuestions, atencionTopics, atencionUnits } from "./content/atencion";
 import { proyectivasQuestions, proyectivasTopics, proyectivasUnits } from "./content/proyectivas";
 import type { ProjectionExercise } from "./lib/proyectivas-types";
+import { antroQuestions, antroTopics, antroUnits } from "./content/antro";
 
 export type Topic = "RMf" | "Estadística" | "tES" | "Integración";
 export type SubjectId = "psicologia-experimental" | (string & {});
@@ -38,6 +39,14 @@ export type Subject = {
 };
 
 export const subjects: Subject[] = [
+  {
+    id: "antro", name: "Antropología Cultural, Contemporánea y Latinoamericana", shortName: "Antropología",
+    description: "Prepará el final con desarrollos, relaciones entre textos y análisis de situaciones. Generá un simulacro integrador o repasá cada lectura de las cinco unidades.",
+    questionTypes: ["development", "case-study"], topics: antroTopics, units: antroUnits,
+    materialLabel: "Final de Antropología · cinco unidades",
+    studyNote: "Basado en los dos resúmenes de Artro. Las respuestas se revisan criterio por criterio: logrado, incompleto o incorrecto, con explicación y orientación para reescribir. Es autoevaluación guiada, sin calificación automática del texto. La estructura es didáctica; no confirma la modalidad del próximo turno.",
+    accent: "#785235", soft: "#f1e7d9", mark: "A"
+  },
   {
     id: "proyectivas", name: "Rorschach", shortName: "Rorschach",
     description: "Generá parcialitos de siete actividades: un cuadro de modos aperceptivos y determinantes, tres desarrollos, una lámina aleatoria y dos fenómenos especiales a desarrollar.",
@@ -114,6 +123,7 @@ export type Question = {
   explanation: string;
   source: string;
   rubric?: string[];
+  writtenCriteria?: { expected: string; guidance: string }[];
   media?: MediaAsset;
   projection?: ProjectionExercise;
 };
@@ -334,6 +344,7 @@ export const questions: Question[] = [
   ...psicobioQuestions,
   ...atencionQuestions,
   ...proyectivasQuestions,
+  ...antroQuestions,
   ...demoQuestions
 ];
 

@@ -25,6 +25,7 @@
 
 # misc
 # Material de estudio privado (no publicar en GitHub)
+/Artro/
 *.[pP][dD][fF]
 .DS_Store
 *.pem

@@ -5,8 +5,11 @@ import { questionTypeLabels, type Question, type Subject } from "@/data";
 import { buildSession, selectQuestions, type Mode, type Progress, type StudyScope } from "@/lib/study";
 import { setExamUnits, useExamPreferences, type Exam } from "@/lib/exam-store";
 import { avoidRepeatedPlate, balanceQuestionTypes, generateParcialito, parcialitoComposition } from "@/lib/proyectivas";
+import { generateAntroFinal } from "@/lib/antro";
+import { antroQuestions, antroSources } from "@/content/antro";
 
 let lastProjectionPlate: number | undefined;
+let previousAntroIds: string[] = [];
 function previousProjectionPlate() {
   try { return Number(sessionStorage.getItem("nucleo-proy-first-plate")) || lastProjectionPlate; } catch { return lastProjectionPlate; }
 }
@@ -60,6 +63,19 @@ export function StudySetup({ subject, progress, onStart }: { subject: Subject; p
   }
 
   return <>
+    {subject.id === "antro" && <section className="panel space-y-5" aria-labelledby="antro-final">
+      <p className="eyebrow">Antropología · Final a desarrollar</p>
+      <h2 id="antro-final" className="text-3xl">Generá un final integrador</h2>
+      <p>Seis consignas: una de cada unidad y una de integración entre textos. Escribí todas las respuestas antes de abrir las guías y después revisá cada criterio. Tiempo sugerido: 120 minutos, sin límite obligatorio.</p>
+      <button className="button button-primary" onClick={() => {
+        const bank = generateAntroFinal(previousAntroIds);
+        previousAntroIds = bank.map((question) => question.id);
+        onStart(bank, "Simulacro integrador de Antropología · 6 consignas");
+      }}>Generar final integrador →</button>
+      <p className="text-sm text-[#526056]">El banco tiene {antroQuestions.length} consignas y cubre los ejes y lecturas de ambos resúmenes. Un simulacro recorre las cinco unidades, pero no agota el banco: combiná varios con la práctica por tema. Los filtros de abajo no alteran el generador. La extensión y duración son decisiones de esta práctica, no datos del próximo examen.</p>
+      <details><summary className="cursor-pointer font-bold">Qué encontré sobre la estructura del final</summary><div className="mt-4 space-y-4"><p>El programa oficial consultado contempla desarrollos teóricos, análisis de situaciones y articulación de autores. La modalidad puede variar por turno y condición; para libres describe instancias adicionales. No se verificó un programa de 2026. Los modelos estudiantiles sirven de referencia de estilo y no acreditan un examen oficial.</p><ul className="list-disc space-y-4 pl-5">{antroSources.map((source) => <li key={source.url}><a className="underline" href={source.url} target="_blank" rel="noreferrer">{source.title}</a><p className="mt-1 text-sm text-[#526056]">{source.note}</p></li>)}</ul></div></details>
+      <details><summary className="cursor-pointer font-bold">Mapa de cobertura y plan de repaso</summary><ul className="mt-4 list-disc space-y-3 pl-5">{subject.units?.map((unit) => <li key={unit.id}><strong>{unit.name}</strong> · {unit.id === "u1" || unit.id === "u2" ? "Primer" : "Segundo"} resumen, pp. {unit.pages.join("–")} del PDF · {antroQuestions.filter((question) => question.unit === unit.id && !question.finalOnly).length} consignas de práctica.</li>)}</ul><p className="mt-4">Para cubrir todas las lecturas, elegí «Todas las disponibles» y trabajá cada unidad; después usá «Integración final» y los simulacros. Una pregunta recorrida indica revisión, no dominio.</p></details>
+    </section>}
     {subject.id === "proyectivas" && <section className="panel space-y-5" aria-labelledby="parcialito">
       <p className="eyebrow">Rorschach · Simulacro escrito</p>
       <h2 id="parcialito" className="text-3xl">Generá un parcialito</h2>
